@@ -18,4 +18,4 @@ AC_C_CONST
 dnl Checks for library functions.
 AC_CHECK_FUNCS(gethostname socket strstr)
 
-AC_OUTPUT(base64/Makefile src/Makefile Makefile)
+AC_OUTPUT(mime/Makefile smtp/Makefile Makefile)

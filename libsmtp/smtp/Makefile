@@ -1,38 +1,32 @@
 # Generated automatically from Makefile.in by configure.
 
-FLAGS=-DLIBSMTP_USE_MIME -g
+FLAGS=-DLIBSMTP_USE_MIME -g -I../include
 
-all:	libsmtp.a testapp mimetest
+all:	libsmtp.a testapp
 
-libsmtp.a:	libsmtp_connection.o libsmtp_error.o libsmtp_data.o libsmtp_comm.o libsmtp_mime.o
-	ar -r libsmtp.a libsmtp_connection.o libsmtp_error.o libsmtp_data.o libsmtp_comm.o libsmtp_mime.o
+libsmtp.a:	libsmtp_connection.o libsmtp_error.o libsmtp_data.o libsmtp_comm.o
+	ar -r libsmtp.a libsmtp_connection.o libsmtp_error.o libsmtp_data.o libsmtp_comm.o
 
-libsmtp.o:	libsmtp.c libsmtp.h
+libsmtp.o:	libsmtp.c
 	gcc `glib-config --cflags` $(FLAGS) -c -o libsmtp.o libsmtp.c
 
-libsmtp_connection.o:	libsmtp_connection.c libsmtp.h
+libsmtp_connection.o:	libsmtp_connection.c
 	gcc `glib-config --cflags` $(FLAGS) -c -o libsmtp_connection.o libsmtp_connection.c
 
-libsmtp_comm.o:	libsmtp_comm.c libsmtp.h
+libsmtp_comm.o:	libsmtp_comm.c
 	gcc `glib-config --cflags` $(FLAGS) -c -o libsmtp_comm.o libsmtp_comm.c
 
-libsmtp_mime.o:	libsmtp_mime.c libsmtp_mime.h
-	gcc `glib-config --cflags` $(FLAGS) -c -o libsmtp_mime.o libsmtp_mime.c
-
-libsmtp_error.o:	libsmtp_error.c libsmtp.h
+libsmtp_error.o:	libsmtp_error.c
 	gcc `glib-config --cflags` $(FLAGS) -c -o libsmtp_error.o libsmtp_error.c
 
-libsmtp_data.o:	libsmtp_data.c libsmtp.h
+libsmtp_data.o:	libsmtp_data.c
 	gcc `glib-config --cflags` $(FLAGS) -c -o libsmtp_data.o libsmtp_data.c
 
-testapp.o:	testapp.c libsmtp.h
-	gcc -c -g -o testapp.o testapp.c `glib-config --cflags`
+testapp.o:	testapp.c
+	gcc $(FLAGS) -c -o testapp.o testapp.c `glib-config --cflags`
 
 testapp:	testapp.o libsmtp.a
-	gcc -o testapp -g -L. testapp.o -lsmtp `glib-config --libs` -lglib
-
-mimetest:	mimetest.c libsmtp.a
-	gcc mimetest.c $(FLAGS) -o mimetest -L. -lsmtp `glib-config --cflags` `glib-config --libs`
+	gcc $(FLAGS) -o testapp -L. testapp.o -lsmtp `glib-config --libs` -lglib
 
 clean:
 	rm testapp *.o *.a

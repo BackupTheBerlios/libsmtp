@@ -594,7 +594,10 @@ int libsmtp_body_send_raw (char *libsmtp_body_data, \
   if (libsmtp_session->Stage = LIBSMTP_HEADERS_STAGE)
   {
     /* Now let there be a blank line */
-    g_string_assign (libsmtp_temp_gstring, "\n");
+    libsmtp_temp_gstring = g_string_new ("\n");
+
+    if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 1))
+      return LIBSMTP_ERRORSENDFATAL;
   }
 
   /* We now enter the body stage */

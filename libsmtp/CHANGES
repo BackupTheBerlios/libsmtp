@@ -2,9 +2,12 @@
 
       * Many new functions concerning MIME support added
 
+      * MIME stuff still not quite reliable. Limitations: can't encode in
+        base64 or quoted printable ATM. Please read doc/MIME.
+
 0.7.7 * This is a total rewrite :)
 
-      * Everything is better now. You should love each other *g
+      * Everything is better now. It will be all right now with :)
 
       * Project hosted on libsmtp.berlios.de now
 

@@ -1,5 +1,6 @@
 /*
-  just a small test app for libsmtp mime functions
+  just a small test app for libsmtp mime functions.
+  this will send a text mail.
    
 Copyright © 2001 Kevin Read <obsidian@berlios.de>
 
@@ -43,7 +44,7 @@ int main(void)
   /* This struct holds all session data. You need one per mail server
      connection */
   struct libsmtp_session_struct *mailsession;
-  struct libsmtp_part_struct *mainpart, *textpart, *picturepart, *temppart;
+  struct libsmtp_part_struct *textpart, *temppart;
   
   /* We need these to look through the GLists later on */
   GList *temp_glist;
@@ -57,77 +58,26 @@ int main(void)
   
   /* Now we add some recipients */
   libsmtp_add_recipient (LIBSMTP_REC_TO, "obsidian@berlios.de", mailsession);
-  libsmtp_add_recipient (LIBSMTP_REC_TO, "libsmtp-test@obsidian.de", mailsession);
+  libsmtp_add_recipient (LIBSMTP_REC_TO, "kread@newnet-marketing.de", mailsession);
   libsmtp_add_recipient (LIBSMTP_REC_CC, "libsmtp-test@hotmail.com", mailsession);
   libsmtp_add_recipient (LIBSMTP_REC_CC, "steve.balmer@microsoft.com", mailsession);
   libsmtp_add_recipient (LIBSMTP_REC_BCC, "we_love_you@backstreetboys.com", mailsession);
   libsmtp_add_recipient (LIBSMTP_REC_BCC, "i_love_you_too@backsideboys.com", mailsession);
 
+  printf ("Recipients added.\n");
+
   /* Lets add some parts to the body */
-  mainpart = libsmtp_part_new (NULL, LIBSMTP_MIME_MULTIPART, LIBSMTP_MIME_SUB_MIXED, LIBSMTP_ENC_7BIT, "Test MIME main part", mailsession);
-  if (mainpart == NULL)
-  {
-    printf ("Error adding part: %s\n", libsmtp_strerr (mailsession));
-    return 1;
-  }
-
-  picturepart = libsmtp_part_new (mainpart, 2, 2001, LIBSMTP_ENC_BINARY, "Test MIME image part", mailsession);
+  textpart = libsmtp_part_new (NULL, LIBSMTP_MIME_TEXT, LIBSMTP_MIME_SUB_PLAIN, LIBSMTP_ENC_7BIT, LIBSMTP_CHARSET_USASCII, "Test MIME text part", mailsession);
   if (textpart == NULL)
   {
     printf ("Error adding part: %s\n", libsmtp_strerr (mailsession));
     return 1;
   }
-  
-  textpart = libsmtp_part_new (mainpart, 0, 1, LIBSMTP_ENC_7BIT, "Test MIME text part", mailsession);
-  if (textpart == NULL)
-  {
-    printf ("Error adding part: %s\n", libsmtp_strerr (mailsession));
-    return 1;
-  }
-
-  mailsession->Stage=LIBSMTP_HEADERS_STAGE;
-  
-  if ((temppart = libsmtp_part_query (mailsession))==NULL)
-  {
-    printf ("%s\n", libsmtp_strerr (mailsession));
-    return 1;
-  }
-  printf ("First part: %s, %d\n", temppart->Description->str, temppart->Type);
-
-  /* Happy hack to switch to next part */
-  
-  if (libsmtp_int_nextpart (mailsession))
-  {
-    printf ("%s\n", libsmtp_strerr (mailsession));
-    return 1;
-  }
-
-  if ((temppart = libsmtp_part_query (mailsession))==NULL)
-  {
-    printf ("%s\n", libsmtp_strerr (mailsession));
-    return 1;
-  }
-  printf ("Next part: %s, %d\n", temppart->Description->str, temppart->Type);
-
-  /* Happy hack to switch to next part */
-  
-  if (libsmtp_int_nextpart (mailsession))
-  {
-    printf ("%s\n", libsmtp_strerr (mailsession));
-    return 1;
-  }
-
-  if ((temppart = libsmtp_part_query (mailsession))==NULL)
-  {
-    printf ("%s\n", libsmtp_strerr (mailsession));
-    return 1;
-  }
-  printf ("Next part: %s, %d\n", temppart->Description->str, temppart->Type);
-
-  return 0;
+ 
+  printf ("Text part added.\n");
 
   /* This starts the SMTP connection */
-  if (libsmtp_connect ("mail.obsidian.de",0,0,mailsession))
+  if (libsmtp_connect ("container",0,0,mailsession))
   {
     printf ("An error occured while connecting:\n%s\nLast Response:%s\n", \
       libsmtp_strerr (mailsession), mailsession->LastResponse->str);
@@ -139,6 +89,8 @@ int main(void)
 
     return mailsession->ErrorCode;
   }
+  
+  printf ("SMTP connection running.\n");
     
   /* This will conduct the SMTP dialogue */
   if (libsmtp_dialogue (mailsession))
@@ -154,6 +106,8 @@ int main(void)
     return mailsession->ErrorCode;
   }
   
+  printf ("Dialogue finished.\n");
+
   /* Now lets send the headers - you can send your own headers too */
   if (libsmtp_headers (mailsession))
   {
@@ -168,12 +122,26 @@ int main(void)
     return mailsession->ErrorCode;
   }
 
-  
+  printf ("SMTP headers sent.\n");
 
-  return 0;
+  /* Now lets send the MIME headers */
+  if (libsmtp_mime_headers (mailsession))
+  {
+    printf ("An error occured while sending header data:\n%s\nLast Response:%s\n", \
+      libsmtp_strerr (mailsession), mailsession->LastResponse->str);
+    printf ("\nAll in all %u bytes of dialogue data (%u lines) were sent.\n",
+      mailsession->DialogueBytes, mailsession->DialogueSent);
+    printf ("%u bytes of header data (%u lines) were sent.\n",
+       mailsession->HeaderBytes, mailsession->HeadersSent);
+    printf ("%lu bytes of body data were sent.\n", mailsession->BodyBytes);
+
+    return mailsession->ErrorCode;
+  }
+
+  printf ("MIME headers sent.\n");
 
   /* This sends a line of message body */
-  if (libsmtp_body_send_raw ("Bla!!", mailsession))
+  if (libsmtp_part_send ("Bla!!", mailsession))
   {
     printf ("An error occured while sending the body:\n%s\nLast Response:%s\n", \
       libsmtp_strerr (mailsession), mailsession->LastResponse->str);
@@ -185,6 +153,8 @@ int main(void)
 
     return mailsession->ErrorCode;
   }
+ 
+  printf ("First part sent.\n");
 
   /* This ends the body part */
   if (libsmtp_body_end (mailsession))

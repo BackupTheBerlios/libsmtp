@@ -76,12 +76,13 @@ char *libsmtp_mime_charsets[] = {
 
 /* This function creates a new body part, checks for conformance to RFC822
    and RFC 2045 and maybe attaches it to the session. It is taken care in here
-   that only multipart and message parts can contain children! */
+   that only multipart and message parts can contain children! Charset is
+   ignored unless you set a text or message part */
 
 struct libsmtp_part_struct *libsmtp_part_new \
     (struct libsmtp_part_struct *libsmtp_int_parent_part, int libsmtp_int_type,\
-    int libsmtp_int_subtype, int libsmtp_int_encoding, char *libsmtp_int_desc,\
-    struct libsmtp_session_struct *libsmtp_session)
+    int libsmtp_int_subtype, int libsmtp_int_encoding, int libsmtp_int_charset, \
+    char *libsmtp_int_desc, struct libsmtp_session_struct *libsmtp_session)
 {
   struct libsmtp_part_struct *libsmtp_int_part;
   GNode *libsmtp_int_temp_node;
@@ -140,11 +141,13 @@ struct libsmtp_part_struct *libsmtp_part_new \
   libsmtp_int_part->CustomType = g_string_new (NULL);
   libsmtp_int_part->CustomSubtype = g_string_new (NULL);
   libsmtp_int_part->Description = g_string_new (NULL);
+  libsmtp_int_part->Boundary = g_string_new (NULL);
   
   libsmtp_int_part->Type = libsmtp_int_type;
   libsmtp_int_part->Subtype=libsmtp_int_subtype;
   libsmtp_int_part->Encoding=libsmtp_int_encoding;
   libsmtp_int_part->Description=g_string_new (libsmtp_int_desc);
+  libsmtp_int_part->Charset=libsmtp_int_charset;
 
   if (libsmtp_int_check_part (libsmtp_int_part))
   {
@@ -199,7 +202,11 @@ int libsmtp_int_nextpart (struct libsmtp_session_struct *libsmtp_session)
 {
   GNode *libsmtp_temp_now;
   struct libsmtp_part_struct *libsmtp_temp_part;
+  GString *libsmtp_temp_gstring=0;
+  char *libsmtp_temp_string;
   int libsmtp_temp_int, libsmtp_loop_running=0, libsmtp_int_travel=0;
+  
+  libsmtp_temp_gstring = g_string_new (NULL);
   
   /* Are we in a part already? */
   if (!libsmtp_session->PartNowNode)
@@ -210,6 +217,16 @@ int libsmtp_int_nextpart (struct libsmtp_session_struct *libsmtp_session)
     #ifdef LIBSMTP_DEBUG
       printf ("libsmtp_int_nextpart: Starting with main part %s\n", libsmtp_session->PartNow->Description->str);
     #endif
+    
+    /* If this is a Multipart part, we must send the standard MIME blurb */
+    if (libsmtp_session->PartNow->Type == LIBSMTP_MIME_MULTIPART)
+    {
+      g_string_assign (libsmtp_temp_gstring, \
+         "This is a MIME multipart message. Your mail reader isn't MIME capable.\n\rYou might not be able to read parts or all of this message.\r\n");
+    
+      if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 2))
+        return LIBSMTP_ERRORSENDFATAL;
+    }
   }
   else
   {
@@ -289,7 +306,16 @@ int libsmtp_int_nextpart (struct libsmtp_session_struct *libsmtp_session)
           printf ("libsmtp_int_nextpart: Part %s is Multipart, so we jump to the first child\n", libsmtp_session->PartNow->Description->str);
         #endif
 
-        /* Yes, so set PartNowNode to the first child */
+        /* Yes, is the boundary string set? */
+        if (libsmtp_temp_part->Boundary->len)
+        {
+          /* No, we really should set that */
+          g_string_sprintf (libsmtp_temp_part->Boundary, \
+             "----_=_libsmtp_Nextpart__000_000007DA.3B95D19_%d", \
+             g_node_depth (libsmtp_session->PartNowNode));
+        }
+        
+        /* Set PartNowNode to the first child */
         libsmtp_session->PartNowNode=libsmtp_session->PartNowNode->children;
         libsmtp_session->PartNow=libsmtp_session->PartNowNode->data;
       
@@ -304,6 +330,75 @@ int libsmtp_int_nextpart (struct libsmtp_session_struct *libsmtp_session)
       {
         /* No, this is our man! */
         libsmtp_session->PartNow = libsmtp_session->PartNowNode->data;
+        
+        /* Maybe we have to send out a boundary and next part data... */
+        if (g_node_depth (libsmtp_session->PartNowNode) > 1)
+        {
+          libsmtp_temp_now=libsmtp_session->PartNowNode->parent;
+          libsmtp_temp_part=libsmtp_temp_now->data;
+          
+          g_string_sprintf (libsmtp_temp_gstring, "\r\n\r\n\r\n--%s\r\n", \
+             libsmtp_temp_part->Boundary->str);
+             
+          #ifdef LIBSMTP_DEBUG
+            printf ("libsmtp_mime_headers: %s", libsmtp_temp_gstring->str);
+          #endif
+
+          if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 1))
+            return LIBSMTP_ERRORSENDFATAL;
+
+          libsmtp_temp_part=libsmtp_session->PartNow;
+
+          /* We should check for valied MIME settings first */
+          if ((libsmtp_temp_int=libsmtp_int_check_part (libsmtp_temp_part)))
+          {
+            libsmtp_session->ErrorCode=libsmtp_temp_int;
+            return libsmtp_temp_int;
+          }
+
+          /* Then we look up the names of the MIME settings of the main body part 
+             and send them as headers */
+
+          g_string_sprintf (libsmtp_temp_gstring, "Content-Type: %s/%s", \
+             libsmtp_int_lookup_mime_type (libsmtp_temp_part), \
+             libsmtp_int_lookup_mime_subtype (libsmtp_temp_part));
+
+          #ifdef LIBSMTP_DEBUG
+            printf ("libsmtp_mime_headers: %s. Type: %d/%d\n", libsmtp_temp_gstring->str, \
+            libsmtp_temp_part->Type, libsmtp_temp_part->Subtype);
+          #endif
+    
+          if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 1))
+            return LIBSMTP_ERRORSENDFATAL;
+
+          /* Text and message parts will have a charset setting */
+          if ((libsmtp_temp_part->Type==LIBSMTP_MIME_TEXT) ||
+              (libsmtp_temp_part->Type==LIBSMTP_MIME_MESSAGE))
+            if ((libsmtp_temp_string=libsmtp_int_lookup_mime_charset(libsmtp_temp_part)))
+            {
+              g_string_sprintf (libsmtp_temp_gstring, ";\r\n charset=\"%s\"", \
+                 libsmtp_temp_string);
+       
+              if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 1))
+                return LIBSMTP_ERRORSENDFATAL;
+
+              #ifdef LIBSMTP_DEBUG
+                printf ("libsmtp_mime_headers: %s", libsmtp_temp_gstring->str);
+              #endif
+            }
+    
+          /* We need a transfer encoding, too */
+    
+          g_string_sprintf (libsmtp_temp_gstring, "\r\nContent-Transfer-Encoding: %s\r\n", \
+             libsmtp_int_lookup_mime_encoding (libsmtp_temp_part));
+    
+          #ifdef LIBSMTP_DEBUG
+            printf ("libsmtp_mime_headers: %s\n", libsmtp_temp_gstring);
+          #endif
+    
+          if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 1))
+            return LIBSMTP_ERRORSENDFATAL;
+        }
 
         #ifdef LIBSMTP_DEBUG
           printf ("libsmtp_int_nextpart: I chose %s\n", libsmtp_session->PartNow->Description->str);
@@ -353,53 +448,6 @@ struct libsmtp_part_struct *libsmtp_part_query \
 }
 
 
-/* This function sends body data. It can only be used in the appropriate
-   stage. The data to be sent will to be formatted according to RFC822 and
-   the MIME standards. */
-
-int libsmtp_part_send (char *libsmtp_body_data, \
-            struct libsmtp_session_struct *libsmtp_session)
-{
-
-  /* Headers should have been sent before body data goes out, but we must
-     still be in body stage at most */
-  if ((libsmtp_session->Stage < LIBSMTP_HEADERS_STAGE) ||
-      (libsmtp_session->Stage > LIBSMTP_BODY_STAGE))
-  {
-    libsmtp_session->ErrorCode = LIBSMTP_BADSTAGE;
-    return LIBSMTP_BADSTAGE;
-  }
-
-  /* Check to see if we already are in a part */
-  if (!libsmtp_session->PartNow)
-  {
-    /* We are not at the moment working on one part. Lets see if any parts
-       are defined at all! */
-    if (!libsmtp_session->Parts)
-    {
-      /* nope. bad mistake! */
-      libsmtp_session->ErrorCode=LIBSMTP_NOPARENT;
-      return LIBSMTP_NOPARENT;
-    }
-    
-    /* So we try to lookup the first part that might contain data */
-    if (libsmtp_int_nextpart (libsmtp_session))
-      return LIBSMTP_PARTSERR;
-  }
-  /* Ok, we are in a part */
-
-  if (libsmtp_session->Stage != LIBSMTP_BODY_STAGE)
-    /* We now enter the body stage */
-    libsmtp_session->Stage = LIBSMTP_BODY_STAGE;
-    
-  /* We pass the data on to the encoding and sending function */
-
-/*  if (libsmtp_int_encode_send (libsmtp_body_data, libsmtp_session))
-    return LIBSMTP_ERRORSENDFATAL;  /* FIXME This is not always the case */
-    
-  return LIBSMTP_NOERR;
-}
-
 /* libsmtp_int_check_part checks a part for correct settings */
 
 int libsmtp_int_check_part (struct libsmtp_part_struct *libsmtp_int_part)
@@ -427,6 +475,11 @@ int libsmtp_int_check_part (struct libsmtp_part_struct *libsmtp_int_part)
       {
         return LIBSMTP_BADENCODING;
       }
+      /* Text types must have a valid charset */
+      if ((libsmtp_int_part->Charset < 0) || (libsmtp_int_part->Charset > LIBSMTP_MAX_CHARSET))
+      {
+        return LIBSMTP_BADCHARSET;
+      }
 
     break;
 
@@ -441,6 +494,12 @@ int libsmtp_int_check_part (struct libsmtp_part_struct *libsmtp_int_part)
       {
         return LIBSMTP_BADENCODING;
       }
+      /* Message types must have a valid charset */
+      if ((libsmtp_int_part->Charset < 0) || (libsmtp_int_part->Charset > LIBSMTP_MAX_CHARSET))
+      {
+        return LIBSMTP_BADCHARSET;
+      }
+
     break;
 
     case (LIBSMTP_MIME_IMAGE):
@@ -454,6 +513,9 @@ int libsmtp_int_check_part (struct libsmtp_part_struct *libsmtp_int_part)
       {
         return LIBSMTP_BADENCODING;
       }
+      
+      /* Charset is set to -1 because it won't matter here */
+      libsmtp_int_part->Charset = -1;
     break;                         
 
     case (LIBSMTP_MIME_AUDIO):
@@ -467,6 +529,9 @@ int libsmtp_int_check_part (struct libsmtp_part_struct *libsmtp_int_part)
       {
         return LIBSMTP_BADENCODING;
       }
+
+      /* Charset is set to -1 because it won't matter here */
+      libsmtp_int_part->Charset = -1;
     break;
 
     case (LIBSMTP_MIME_VIDEO):
@@ -480,6 +545,9 @@ int libsmtp_int_check_part (struct libsmtp_part_struct *libsmtp_int_part)
       {
         return LIBSMTP_BADENCODING;
       }
+
+      /* Charset is set to -1 because it won't matter here */
+      libsmtp_int_part->Charset = -1;
     break;
 
     case (LIBSMTP_MIME_APPLICATION):
@@ -493,6 +561,9 @@ int libsmtp_int_check_part (struct libsmtp_part_struct *libsmtp_int_part)
       {
         return LIBSMTP_BADENCODING;
       }
+
+      /* Charset is set to -1 because it won't matter here */
+      libsmtp_int_part->Charset = -1;
     break;
 
     case (LIBSMTP_MIME_MULTIPART):
@@ -507,6 +578,9 @@ int libsmtp_int_check_part (struct libsmtp_part_struct *libsmtp_int_part)
       {
         return LIBSMTP_BADENCODING;
       }
+
+      /* Charset is set to -1 because it won't matter here */
+      libsmtp_int_part->Charset = -1;
     break;
 
     case (LIBSMTP_MIME_CUSTOM):
@@ -520,6 +594,12 @@ int libsmtp_int_check_part (struct libsmtp_part_struct *libsmtp_int_part)
       {
         return LIBSMTP_BADENCODING;
       }
+
+      /* Custom types must have a valid charset or NOCHARSET */
+      if ((libsmtp_int_part->Charset < LIBSMTP_CHARSET_NOCHARSET) || (libsmtp_int_part->Charset > LIBSMTP_MAX_CHARSET))
+      {
+        return LIBSMTP_BADCHARSET;
+      }
     break;
   }
   
@@ -532,7 +612,7 @@ int libsmtp_int_check_part (struct libsmtp_part_struct *libsmtp_int_part)
 
 const char *libsmtp_int_lookup_mime_type (struct libsmtp_part_struct *libsmtp_int_part)
 {
-  if ((libsmtp_int_part->Type > 0) && (libsmtp_int_part->Type < LIBSMTP_MAX_MIME))
+  if ((libsmtp_int_part->Type >= 0) && (libsmtp_int_part->Type < LIBSMTP_MAX_MIME))
   {
     if (libsmtp_int_part->Type == LIBSMTP_MIME_CUSTOM)
       return libsmtp_int_part->CustomType->str;
@@ -545,30 +625,28 @@ const char *libsmtp_int_lookup_mime_type (struct libsmtp_part_struct *libsmtp_in
 
 const char *libsmtp_int_lookup_mime_subtype (struct libsmtp_part_struct *libsmtp_int_part)
 {
-  if (libsmtp_int_check_part (libsmtp_int_part))
-  {
     switch (libsmtp_int_part->Type)
     {
       case LIBSMTP_MIME_TEXT:
         return libsmtp_mime_subtypes0[libsmtp_int_part->Subtype];
 
       case LIBSMTP_MIME_MESSAGE:
-        return libsmtp_mime_subtypes1[libsmtp_int_part->Subtype];
+        return libsmtp_mime_subtypes1[libsmtp_int_part->Subtype-1000];
 
       case LIBSMTP_MIME_IMAGE:
-        return libsmtp_mime_subtypes2[libsmtp_int_part->Subtype];
+        return libsmtp_mime_subtypes2[libsmtp_int_part->Subtype-2000];
 
       case LIBSMTP_MIME_AUDIO:
-        return libsmtp_mime_subtypes3[libsmtp_int_part->Subtype];
+        return libsmtp_mime_subtypes3[libsmtp_int_part->Subtype-3000];
 
       case LIBSMTP_MIME_VIDEO:
-        return libsmtp_mime_subtypes4[libsmtp_int_part->Subtype];
+        return libsmtp_mime_subtypes4[libsmtp_int_part->Subtype-4000];
 
       case LIBSMTP_MIME_APPLICATION:
-        return libsmtp_mime_subtypes5[libsmtp_int_part->Subtype];
+        return libsmtp_mime_subtypes5[libsmtp_int_part->Subtype-5000];
 
       case LIBSMTP_MIME_MULTIPART:
-        return libsmtp_mime_subtypes6[libsmtp_int_part->Subtype];
+        return libsmtp_mime_subtypes6[libsmtp_int_part->Subtype-6000];
 
       case LIBSMTP_MIME_CUSTOM:
         return libsmtp_int_part->CustomSubtype->str;
@@ -576,22 +654,26 @@ const char *libsmtp_int_lookup_mime_subtype (struct libsmtp_part_struct *libsmtp
       default:
         return NULL;
     }
-  }
-  else
-    return NULL;
 }
 
 const char *libsmtp_int_lookup_mime_charset (struct libsmtp_part_struct *libsmtp_int_part)
 {
-  if ((libsmtp_int_part->Charset > 0) && (libsmtp_int_part->Charset < LIBSMTP_MAX_CHARSET))
-    return libsmtp_mime_charsets[libsmtp_int_part->Charset];
-  else
-    return NULL;
+  /* Only textual parts can have a charset */
+  if ((libsmtp_int_part->Type == LIBSMTP_MIME_TEXT) || \
+      (libsmtp_int_part->Type == LIBSMTP_MIME_MESSAGE))
+    {
+    if ((libsmtp_int_part->Charset >= 0) && (libsmtp_int_part->Charset < LIBSMTP_MAX_CHARSET))
+    {
+      return libsmtp_mime_charsets[libsmtp_int_part->Charset];
+    }
+    else
+      return NULL;
+  }
 }
 
 const char *libsmtp_int_lookup_mime_encoding (struct libsmtp_part_struct *libsmtp_int_part)
 {
-  if ((libsmtp_int_part->Encoding > 0) && (libsmtp_int_part->Encoding < LIBSMTP_MAX_ENC))
+  if ((libsmtp_int_part->Encoding >= 0) && (libsmtp_int_part->Encoding < LIBSMTP_MAX_ENC))
     return libsmtp_mime_encodings[libsmtp_int_part->Encoding];
   else
     return NULL;

@@ -124,10 +124,12 @@
 
     /* Charset values */
     
+    #define LIBSMTP_CHARSET_NOCHARSET	-1
     #define LIBSMTP_CHARSET_USASCII	0
     #define LIBSMTP_CHARSET_ISO8859_1	1
     #define LIBSMTP_CHARSET_ISO8859_2	2
     #define LIBSMTP_CHARSET_ISO8859_3	3
+    
     
     /* Need to define more here ... */
     
@@ -145,10 +147,11 @@
     int Encoding;	/* MIME transfer encoding */
     int Charset;	/* optional charset for text MIME types */
     GString *Description;	/* MIME part description */
+    GString *Boundary;	 /* optional Multipart boundary string */
   };
 
   struct libsmtp_part_struct *libsmtp_part_new \
-        (struct libsmtp_part_struct *, int, int, int, char *,\
+        (struct libsmtp_part_struct *, int, int, int, int, char *,\
         struct libsmtp_session_struct *libsmtp_session);
         
   int libsmtp_mime_type_custom (char *, struct libsmtp_part_struct *,\
@@ -156,9 +159,28 @@
 
   int libsmtp_mime_subtype_custom (char *, struct libsmtp_part_struct *,\
         struct libsmtp_session_struct *);
+  
+  struct libsmtp_part_struct *libsmtp_part_query (struct libsmtp_session_struct *);
+  
+  int libsmtp_mime_headers (struct libsmtp_session_struct *);
+  
+  int libsmtp_part_send (char *, struct libsmtp_session_struct *);
+  
+  int libsmtp_part_next (struct libsmtp_session_struct *);
+  
+  /* internal functions */
+  
+  int libsmtp_int_check_part (struct libsmtp_part_struct *);
 
-  int libsmtp_mime_content_desc (char *, struct libsmtp_part_struct *,\
-        struct libsmtp_session_struct *);
+  const char *libsmtp_int_lookup_mime_type (struct libsmtp_part_struct *);
+
+  const char *libsmtp_int_lookup_mime_subtype (struct libsmtp_part_struct *);
+
+  const char *libsmtp_int_lookup_mime_charset (struct libsmtp_part_struct *);
+
+  const char *libsmtp_int_lookup_mime_encoding (struct libsmtp_part_struct *);
+
+  int libsmtp_int_nextpart (struct libsmtp_session_struct *);
   
   /* MIME related error codes >= 2048 */
   #define LIBSMTP_BADMIME	2048	/* You gave a bad type/subtype combo */
@@ -168,6 +190,7 @@
   #define LIBSMTP_PART_EXISTS	2052	/* This part exists already */
   #define LIBSMTP_PARTSERR	2053	/* Generic parts error */
   #define LIBSMTP_PARTSFINISHED	2054	/* All parts finished */
+  #define LIBSMTP_BADCHARSET	2055
   
-  #define LIBSMTP_MAX_MIME_ERRNO	2054
+  #define LIBSMTP_MAX_MIME_ERRNO	2055
 /* #endif LIBSMTP_USE_MIME */
