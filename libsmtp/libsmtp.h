@@ -12,6 +12,15 @@
 #define LIBSMTP_HAS_SIZE	16
 #define LIBSMTP_HAS_DSN		32
 
+/* These are the error definitions */
+
+/* Error codes below 1024 are fatal errors - the socket will be closed */
+#define LIBSMTP_SOCKETNOCREATE	1
+#define LIBSMTP_HOSTNOTFOUND	2
+#define LIBSMTP_CONNECTERR	3
+#define LIBSMTP_ERRORREADFATAL	4
+#define LIBSMTP_NOTWELCOME	5
+
 /* This structure defines one libsmtp session */
 
 struct libsmtp_session_struct {
@@ -33,7 +42,7 @@ struct libsmtp_session_struct {
   GString *Subject;	/* Mail subject */
   GString *LastResponse;	/* Last SMTP response string from server */
   int LastResponseCode;	/* Last SMTP response code from server */
-  int LibsmtpErrorcode;	/* Internal libsmtp error code from last error */
+  int ErrorCode;	/* Internal libsmtp error code from last error */
 
   int DialogueSent;	/* Number of SMTP dialogue lines sent */
   int DialogueBytesSent;	/* Bytes of SMTP dialogue data sent */
@@ -41,6 +50,8 @@ struct libsmtp_session_struct {
   int HeadersBytesSent	/* Bytes of header data sent */
   int BodyBytesSent;	/* Bytes of body data sent */
 };
+
+struct libsmtp_session_struct *libsmtp_connect (char *, unsigned int, unsigned int);
 
 int libsmtp_errno(struct libsmtp_session_struct *);
 
