@@ -13,20 +13,20 @@ Returns: A pointer to an libsmtp_session_struct with data filled in. You
 should check this with libsmtp_error.
  
 
-int libsmtp_errno (struct *libsmtp_session_struct data)
+int libsmtp_errno (struct libsmtp_session_struct *data)
 
 This function returns the internal error code for this session. It can be
 read directly from the session_struct, too.
 
 
-const char *libsmtp_strerr (struct *libsmtp_session_struct data)
+const char *libsmtp_strerr (struct libsmtp_session_struct *data)
 
 If you have an error condition, this function will return the error name,
 otherwise "no error" will be returned.
 
 
 int libsmtp_add_recipient (int recipient_type, char *address, struct
-          *libsmtp_session_struct data)
+          libsmtp_session_struct *data)
 
 This function will add the address to the recipient of this session.
 recipient_type may be one of LIBSMTP_REC_TO, LIBSMTP_REC_CC,
@@ -35,7 +35,7 @@ Returns: 0 for success, otherwise see libsmtp_error.
 
 
 int libsmtp_set_environment (char *from, char *subject, unsigned int flags,
-         struct *libsmtp_session_struct)
+         struct libsmtp_session_struct *data)
 
 With this function you can set additional session parameters for this
 session. This should be set before the dialogue is begun. You can set the
@@ -93,8 +93,7 @@ memory usage.
 
 
 struct libsmtp_session_struct {
-  int connection,
-  unsigned int server_flags,
+  int Serverflags,
   int socket,
   GString *From,
   GList *To,

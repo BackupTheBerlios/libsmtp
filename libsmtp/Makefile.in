@@ -1,19 +1,19 @@
 
 all:	libsmtp.a testapp
 
-libsmtp.a:	libsmtp.o
-	ar -r libsmtp.a libsmtp.o
+libsmtp.a:	libsmtp_connection.o libsmtp_error.o
+	ar -r libsmtp.a libsmtp_connection.o libsmtp_error.o
 
 libsmtp.o:	libsmtp.c libsmtp.h
 	gcc `glib-config --cflags` -c -g -o libsmtp.o libsmtp.c
 
-libsmtp_commands.o:	libsmtp_commands.c libsmtp_commands.h
-	gcc -c -O2 -o libsmtp_commands.o libsmtp_commands.c
+libsmtp_connection.o:	libsmtp_connection.c libsmtp.h
+	gcc -c -g -o libsmtp_connection.o libsmtp_connection.c
 
-libsmtp_error.o:	libsmtp_error.c
-	gcc -c -O2 -o libsmtp_error.o libsmtp_error.c
+libsmtp_error.o:	libsmtp_error.c libsmtp.h
+	gcc -c -g -o libsmtp_error.o libsmtp_error.c
 
-testapp.o:	testapp.c
+testapp.o:	testapp.c libsmtp.h
 	gcc -c -g -o testapp.o testapp.c `glib-config --cflags`
 
 testapp:	testapp.o libsmtp.a

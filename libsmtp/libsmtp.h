@@ -29,6 +29,8 @@
 /* Codes >= 1024 are errors that are not fatal to the whole SMTP session */
 #define LIBSMTP_ERRORREAD	1024
 #define LIBSMTP_ERRORSEND	1025
+
+#define LIBSMTP_UNDEFERR	10000 /* ErrorCode was undefined!! */
 /* This structure defines one libsmtp session */
 
 struct libsmtp_session_struct {

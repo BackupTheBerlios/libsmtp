@@ -23,9 +23,10 @@ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  U
 Kevin Read <myself@obsidian.de>
 Thu Aug 16 2001 */
 
-#include "libsmtp_int.h"
+#include <glib.h>
+#include "libsmtp.h"
 
-/* libsmtp_sendmail
+/* old libsmtp_sendmail func_
 
   return values:
   
@@ -51,44 +52,60 @@ Thu Aug 16 2001 */
   19 unbalanced < in address
   */
   
-const char *libsmtp_strerr_strings[] = {
-  "No error, mail sent",
+const char *libsmtp_strerr_strings_fatal[] = {
+  "No error",   /* 0 */
   "Unable to create local socket",
   "Mailserver unknown",
   "Connection to mailserver failed",
-  "Unable to read from socket",
-  "Mailserver didn't greet correctly conforming to RFC",
-  "Unable to send to socket",
-  "Mailserver didn't accept our HELO command",
-  "Mailserver didn't accept our MAIL FROM command",
-  "Mailserver didn't accept our RCPT TO command",
-  "Mailserver didn't accept our DATA command",
-  "Mailserver rejected mail after DATA",
-  "Unable to get local hostname",
-  "Incomplete From-Address",
-  "Incomplete Recipient Address",
-  "No 8 bit support",
-  "8bit check failed!",
-  "libsmtp_sendmail called without calling libsmtp_init first",
-  "malloc error",
-  "unbalanced '<' in address"
+  "Unable to read from socket, fatal", /* 4 */
+  "Mailserver didn't greet correctly conforming to RFC, we might not be welcome",
+  "Can't find our hostname",
+  "Unable to send to socket" /* 7 */
+};
+
+const char *libsmtp_strerr_strings_nonfatal[] = {
+  "Error reading from socket",   /* 1024 */
+  "Error sending to socket"
 };
 
 const char *libsmtp_undef_errstr = "Undefined error";  
 
-#define MIN_ERRNO 0
-#define MAX_ERRNO 19
+#define MAX_FATAL_ERRNO 7
+#define MIN_NONFATAL_ERRNO 1024
+#define MAX_NONFATAL_ERRNO 1024+1
 
-
-const char *libsmtp_strerr (int libsmtp_temp_errno)
+const char *libsmtp_strerr (struct libsmtp_session_struct *libsmtp_session)
 {
-  if ((libsmtp_temp_errno > MAX_ERRNO) || (libsmtp_temp_errno < MIN_ERRNO))
+  /* This shouldn't really happen, but this is not C++, we can't prevent
+     non-libsmtp functions from writing to these ...
+     There are no higher error codes than the nonfatal ones */
+  if (libsmtp_session->ErrorCode > MAX_NONFATAL_ERRNO)
     return libsmtp_undef_errstr;
   
-  return libsmtp_strerr_strings [libsmtp_temp_errno];
+  /* And there are no valid error codes betwenn fatal and nonfatal */
+  if ((libsmtp_session->ErrorCode > MAX_FATAL_ERRNO) && \
+      (libsmtp_session->ErrorCode < MIN_NONFATAL_ERRNO))
+    return libsmtp_undef_errstr;
+  
+  /* Now send back the pointer - we have two tables */
+  if (libsmtp_session->ErrorCode > MAX_FATAL_ERRNO)
+    return libsmtp_strerr_strings_nonfatal [libsmtp_session->ErrorCode];
+  else
+    return libsmtp_strerr_strings_fatal [libsmtp_session->ErrorCode];
 }
 
-int libsmtp_errno ()
+int libsmtp_errno (struct libsmtp_session_struct *libsmtp_session)
 {
-  return libsmtp_int_errno;
+  /* This shouldn't really happen, but this is not C++, we can't prevent
+     non-libsmtp functions from writing to these ...
+     There are no higher error codes than the nonfatal ones */
+  if (libsmtp_session->ErrorCode > MAX_NONFATAL_ERRNO)
+    return LIBSMTP_UNDEFERR;
+  
+  /* And there are no valid error codes betwenn fatal and nonfatal */
+  if ((libsmtp_session->ErrorCode > MAX_FATAL_ERRNO) && \
+      (libsmtp_session->ErrorCode < MIN_NONFATAL_ERRNO))
+    return LIBSMTP_UNDEFERR;
+
+  return libsmtp_session->ErrorCode;
 }
