@@ -35,92 +35,7 @@ Thu Aug 16 2001 */
 
 #include "libsmtp.h"
 
-/* Type is one of:
-	0 normal body mesg
-	1 normal header mesg
-	2 normal dialogue mesg
 
-  This function won't return correct libsmtp_gstring_read for dialogue mesgs */
-
-int libsmtp_int_read (GString *libsmtp_gstring_read, struct libsmtp_session_struct *libsmtp_session, int type)
-{
-  int libsmtp_int_bytes;
-  char *libsmtp_int_temp_buffer;
-  char libsmtp_int_rec_buffer[4096];
-  
-  bzero (libsmtp_int_rec_buffer, sizeof(libsmtp_int_rec_buffer));
-  
-  libsmtp_int_bytes=recv (libsmtp_session->socket, libsmtp_int_rec_buffer, sizeof(libsmtp_int_rec_buffer), 0);
-  if (libsmtp_int_bytes<=0)
-  {
-    libsmtp_session->ErrorCode=LIBSMTP_ERRORREAD;
-    return LIBSMTP_ERRORREAD;
-  }
-
-  /* Update statistics */
-  switch (type)
-  {
-    case (0):
-      libsmtp_session->BodyBytes+=libsmtp_int_bytes;
-      break;
-    
-    case (1):
-      libsmtp_session->HeaderBytes+=libsmtp_int_bytes;
-      libsmtp_session->HeadersSent++;
-      break;
-
-    case (2):
-      libsmtp_session->DialogueBytes+=libsmtp_int_bytes;
-      libsmtp_session->DialogueSent++;
-
-      g_string_assign (libsmtp_gstring_read, libsmtp_int_rec_buffer);
-
-      /* Ok, take the first part of the response ... */
-      libsmtp_int_temp_buffer = strtok ((char *)libsmtp_int_rec_buffer, " ");
-  
-      /* and extract the response code */
-      libsmtp_session->LastResponseCode = atoi(libsmtp_int_temp_buffer);
-  
-      /* Then fetch the rest of the string and save it */
-      libsmtp_int_temp_buffer = strtok (NULL, "\0");
-      libsmtp_session->LastResponse = g_string_new (libsmtp_int_temp_buffer);
-      break;
-  }
-  return LIBSMTP_NOERR;
-}    
-
-/* Type is one of:
-	0 normal body mesg
-	1 normal header mesg
-	2 normal dialogue mesg */
-
-int libsmtp_int_send (GString *libsmtp_send_gstring, struct libsmtp_session_struct *libsmtp_session, int type)
-{
-  int libsmtp_int_bytes;
-  libsmtp_int_bytes=send (libsmtp_session->socket, libsmtp_send_gstring->str, libsmtp_send_gstring->len, 0);
-  if (libsmtp_int_bytes<0)
-  {
-    libsmtp_session->ErrorCode=LIBSMTP_ERRORSEND;
-    return LIBSMTP_ERRORSEND;
-  }
-  /* Update statistics */
-  switch (type)
-  {
-    case (0):
-      libsmtp_session->BodyBytes+=libsmtp_int_bytes;
-      break;
-    case (1):
-      libsmtp_session->HeaderBytes+=libsmtp_int_bytes;
-      libsmtp_session->HeadersSent++;
-      break;
-    case (2):
-      libsmtp_session->DialogueBytes+=libsmtp_int_bytes;
-      libsmtp_session->DialogueSent++;
-      break;
-  }
-    
-  return LIBSMTP_NOERR;
-}
 int libsmtp_connect (char *libsmtp_server, unsigned int libsmtp_port, unsigned int libsmtp_flags, struct libsmtp_session_struct *libsmtp_session)
 {
   int libsmtp_socket; 		/* The temporary socket handle */
@@ -136,6 +51,9 @@ int libsmtp_connect (char *libsmtp_server, unsigned int libsmtp_port, unsigned i
   bzero (libsmtp_temp_buffer, sizeof(libsmtp_temp_buffer));
   
   libsmtp_temp_gstring = g_string_new (NULL);
+  
+  /* We enter the connect stage now */
+  libsmtp_session->Stage = LIBSMTP_CONNECT_STAGE;
 
   /* We need a socket anyway :) */
   libsmtp_socket = socket (PF_INET, SOCK_STREAM, 0);
@@ -177,14 +95,12 @@ int libsmtp_connect (char *libsmtp_server, unsigned int libsmtp_port, unsigned i
   /* Ok, lets set the session socket to the right handler */
   libsmtp_session->socket = libsmtp_socket;
   
+  /* We enter the greet stage now */
+  libsmtp_session->Stage = LIBSMTP_GREET_STAGE;
+
   /* Now we should read the mail servers greeting */
   if (libsmtp_int_read (libsmtp_temp_gstring, libsmtp_session, 2))
-  {
-    libsmtp_session->ErrorCode=LIBSMTP_ERRORREADFATAL;
-    close (libsmtp_socket);
-    libsmtp_session->socket=0;
     return LIBSMTP_ERRORREADFATAL;
-  }
   
   if (libsmtp_session->LastResponseCode != 220)
   {
@@ -204,28 +120,21 @@ int libsmtp_connect (char *libsmtp_server, unsigned int libsmtp_port, unsigned i
     return LIBSMTP_WHATSMYHOSTNAME;
   }
   
+  /* We enter the hello stage now */
+  libsmtp_session->Stage = LIBSMTP_HELLO_STAGE;
+
   /* Ok, lets greet him back */
-  
+
   g_string_sprintf (libsmtp_temp_gstring, "EHLO %s\n", libsmtp_temp_buffer);
 
   if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 2))
-  {
-    libsmtp_session->ErrorCode=LIBSMTP_ERRORSENDFATAL;
-    close (libsmtp_session->socket);
-    libsmtp_session->socket=0;
     return LIBSMTP_ERRORSENDFATAL;
-  }
   
   /* After this he will send us his capabilities. He may not be able to
      recognize EHLO though, so we have to send HELO instead. */
   
   if (libsmtp_int_read (libsmtp_temp_gstring, libsmtp_session, 2))
-  {
-    libsmtp_session->ErrorCode=LIBSMTP_ERRORSENDFATAL;
-    close (libsmtp_session->socket);
-    libsmtp_session->socket=0;
     return LIBSMTP_ERRORSENDFATAL;
-  }
 
   if (libsmtp_session->LastResponseCode < 300)
   {
@@ -264,12 +173,7 @@ int libsmtp_connect (char *libsmtp_server, unsigned int libsmtp_port, unsigned i
     g_string_sprintf (libsmtp_temp_gstring, "HELO %s\n", libsmtp_temp_buffer);
 
     if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 2))
-    {
-      libsmtp_session->ErrorCode=LIBSMTP_ERRORSENDFATAL;
-      close (libsmtp_session->socket);
-      libsmtp_session->socket=0;
       return LIBSMTP_ERRORSENDFATAL;
-    }
   
     /* Lets see if he likes us now. */
     

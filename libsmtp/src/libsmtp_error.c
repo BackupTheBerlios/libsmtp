@@ -60,20 +60,25 @@ const char *libsmtp_strerr_strings_fatal[] = {
   "Unable to read from socket, fatal", /* 4 */
   "Mailserver didn't greet correctly conforming to RFC, we might not be welcome",
   "Can't find our hostname",
-  "Unable to send to socket" /* 7 */
+  "Unable to send to socket", /* 7 */
+  "Server won't accept sender",
+  "Server rejected mail!!"
 };
 
 const char *libsmtp_strerr_strings_nonfatal[] = {
   "Error reading from socket",   /* 1024 */
   "Error sending to socket",
-  "Bad arguments passed to libsmtp_function"
+  "Bad arguments passed to libsmtp_function",
+  "Server won't accept recipient",
+  "Bad stage in libsmtp",
+  "Server rejected QUIT command :-)"
 };
 
 const char *libsmtp_undef_errstr = "Undefined error";  
 
-#define MAX_FATAL_ERRNO 7
+#define MAX_FATAL_ERRNO 9
 #define MIN_NONFATAL_ERRNO 1024
-#define MAX_NONFATAL_ERRNO 1024+2
+#define MAX_NONFATAL_ERRNO 1029
 
 const char *libsmtp_strerr (struct libsmtp_session_struct *libsmtp_session)
 {
@@ -90,7 +95,7 @@ const char *libsmtp_strerr (struct libsmtp_session_struct *libsmtp_session)
   
   /* Now send back the pointer - we have two tables */
   if (libsmtp_session->ErrorCode > MAX_FATAL_ERRNO)
-    return libsmtp_strerr_strings_nonfatal [libsmtp_session->ErrorCode];
+    return libsmtp_strerr_strings_nonfatal [libsmtp_session->ErrorCode-1024];
   else
     return libsmtp_strerr_strings_fatal [libsmtp_session->ErrorCode];
 }

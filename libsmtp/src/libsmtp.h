@@ -1,4 +1,8 @@
 
+#ifndef __G_LIB_H__
+  #include <glib.h>
+#endif
+
 #ifndef LIB_SMTP_H
 
 #define LIB_SMTP_H
@@ -22,6 +26,29 @@
 #define LIBSMTP_REC_CC	1
 #define LIBSMTP_REC_BCC	2
 
+/* SMTP transaction stages */
+
+#define LIBSMTP_NOCONNECT_STAGE	0
+#define LIBSMTP_CONNECT_STAGE	1
+#define LIBSMTP_GREET_STAGE	2
+#define LIBSMTP_HELLO_STAGE	3
+
+#define LIBSMTP_SENDER_STAGE	16
+#define LIBSMTP_RECIPIENT_STAGE	17
+#define LIBSMTP_DATA_STAGE	18
+#define LIBSMTP_HEADERS_STAGE	19
+#define LIBSMTP_BODY_STAGE	20
+
+#define LIBSMTP_FINISHED_STAGE	128
+#define LIBSMTP_QUIT_STAGE	256
+
+
+/* Module types */
+
+#define LIBSMTP_BODY_MODULE	0
+#define LIBSMTP_HEADER_MODULE	1
+#define LIBSMTP_DIALOGUE_MODULE	2
+
 /* These are the error definitions */
 
 /* Error codes below 1024 are fatal errors - the socket will be closed */
@@ -33,11 +60,17 @@
 #define LIBSMTP_NOTWELCOME	5
 #define LIBSMTP_WHATSMYHOSTNAME	6
 #define LIBSMTP_ERRORSENDFATAL	7
+#define LIBSMTP_WONTACCEPTSENDER	8
+#define LIBSMTP_REJECTBODY	9
+#define LIBSMTP_WONTACCEPTDATA	10
 
 /* Codes >= 1024 are errors that are not fatal to the whole SMTP session */
 #define LIBSMTP_ERRORREAD	1024
 #define LIBSMTP_ERRORSEND	1025
 #define LIBSMTP_BADARGS		1026
+#define LIBSMTP_WONTACCEPTREC	1027
+#define LIBSMTP_BADSTAGE	1028
+#define LIBSMTP_REJECTQUIT	1029
 
 #define LIBSMTP_UNDEFERR	10000 /* ErrorCode was undefined!! */
 /* This structure defines one libsmtp session */
@@ -53,15 +86,17 @@ struct libsmtp_session_struct {
   int NumFailedTo;	/* number of rejected recipients */
   int NumFailedCC;	/* number of rejected CC recipients */
   int NumFailedBCC;	/* number of rejected BCC recipients */
-  GList *FailedTo;	/* List of failed recipients containing the response for
+  GList *ToResponse;	/* List of failed recipients containing the response for
   			   each failure */
-  GList *FailedCC;	/* The same for CC recipients */
-  GList *FailedBCC;	/* And for BCC recipients */
+  GList *CCResponse;	/* The same for CC recipients */
+  GList *BCCResponse;	/* And for BCC recipients */
 
   GString *Subject;	/* Mail subject */
   GString *LastResponse;	/* Last SMTP response string from server */
   int LastResponseCode;	/* Last SMTP response code from server */
   int ErrorCode;	/* Internal libsmtp error code from last error */
+  GString *ErrorModule;	/* Module were error was caused */
+  int Stage;		/* SMTP transfer stage */
 
   int DialogueSent;	/* Number of SMTP dialogue lines sent */
   int DialogueBytes;	/* Bytes of SMTP dialogue data sent */
@@ -88,10 +123,22 @@ int libsmtp_dialogue (struct libsmtp_session_struct *);
 
 int libsmtp_header_send (char *, struct libsmtp_session_struct *);
 
+int libsmtp_headers (struct libsmtp_session_struct *);
+
 int libsmtp_body_send (char *, struct libsmtp_session_struct *);
+
+int libsmtp_body_end (struct libsmtp_session_struct *);
+
+int libsmtp_quit (struct libsmtp_session_struct *);
 
 int libsmtp_close (struct libsmtp_session_struct *);
 
 int libsmtp_free (struct libsmtp_session_struct *);
+
+/* internal functions */
+
+int libsmtp_int_send (GString *, struct libsmtp_session_struct *, int);
+
+int libsmtp_int_read (GString *, struct libsmtp_session_struct *, int);
 
 #endif

@@ -67,9 +67,9 @@ int libsmtp_free (struct libsmtp_session_struct *libsmtp_session)
   g_list_free (libsmtp_session->To);
   g_list_free (libsmtp_session->CC);
   g_list_free (libsmtp_session->BCC);
-  g_list_free (libsmtp_session->FailedTo);
-  g_list_free (libsmtp_session->FailedCC);
-  g_list_free (libsmtp_session->FailedBCC);
+  g_list_free (libsmtp_session->ToResponse);
+  g_list_free (libsmtp_session->CCResponse);
+  g_list_free (libsmtp_session->BCCResponse);
   
   g_string_free (libsmtp_session->From,1);
   g_string_free (libsmtp_session->Subject,1);
@@ -118,15 +118,15 @@ int libsmtp_add_recipient (int libsmtp_int_rec_type, char *libsmtp_int_address,
   switch (libsmtp_int_rec_type)
   {
     case (LIBSMTP_REC_TO):
-      g_list_append (libsmtp_session->To, libsmtp_int_address);
+      libsmtp_session->To = g_list_append (libsmtp_session->To, libsmtp_int_address);
       break;
 
     case (LIBSMTP_REC_CC):
-      g_list_append (libsmtp_session->CC, libsmtp_int_address);
+      libsmtp_session->CC = g_list_append (libsmtp_session->CC, libsmtp_int_address);
       break;
 
     case (LIBSMTP_REC_BCC):
-      g_list_append (libsmtp_session->BCC, libsmtp_int_address);
+      libsmtp_session->BCC = g_list_append (libsmtp_session->BCC, libsmtp_int_address);
       break;
 
     default:

@@ -33,9 +33,48 @@ int main(void)
   struct libsmtp_session_struct *mailsession;
   mailsession = libsmtp_session_initialize();
 
+  libsmtp_set_environment ("kread@newnet-marketing.de","Test", 0, mailsession);
+  
+  libsmtp_add_recipient (LIBSMTP_REC_TO, "kread@newnet-marketing.de", mailsession);
+  libsmtp_add_recipient (LIBSMTP_REC_TO, "kread@mconsole.com", mailsession);
+  libsmtp_add_recipient (LIBSMTP_REC_CC, "obsidian@unverbraucht.de", mailsession);
+  libsmtp_add_recipient (LIBSMTP_REC_CC, "obsidian@obsidian.de", mailsession);
+  libsmtp_add_recipient (LIBSMTP_REC_BCC, "obsidian@panokratie.de", mailsession);
+  libsmtp_add_recipient (LIBSMTP_REC_BCC, "obsidian@gmx.net", mailsession);
+
   if (libsmtp_connect ("container",0,0,mailsession))
     printf ("Ha!\n");
   
+  if (libsmtp_dialogue (mailsession))
+  {
+    printf ("Ha 2!!\n");
+    printf ("Error: %s, %s\n", libsmtp_strerr(mailsession), mailsession->LastResponse->str);
+  }
+  
+  if (libsmtp_headers (mailsession))
+  {
+    printf ("Ha 3!!!\n");
+    printf ("Error: %s\nLastMsg: %s\n", libsmtp_strerr(mailsession), mailsession->LastResponse->str);
+  }
+
+  if (libsmtp_body_send ("Bla!!", mailsession))
+  {
+    printf ("Ha 4!!!!\n");
+    printf ("Error: %s\nLastMsg: %s\n", libsmtp_strerr(mailsession), mailsession->LastResponse->str);
+  }
+
+  if (libsmtp_body_end (mailsession))
+  {
+    printf ("Ha 5!!!!!\n");
+    printf ("Error: %s\nLastMsg: %s\n", libsmtp_strerr(mailsession), mailsession->LastResponse->str);
+  }
+  
+  if (libsmtp_quit (mailsession))
+  {
+    printf ("Ha 6!!!!!!\n");
+    printf ("Error: %s\nLastMsg: %s\n", libsmtp_strerr(mailsession), mailsession->LastResponse->str);
+  }
+
   free (mailsession);
   return 0;
 }
