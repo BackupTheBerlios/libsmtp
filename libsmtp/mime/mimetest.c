@@ -58,11 +58,7 @@ int main(void)
   
   /* Now we add some recipients */
   libsmtp_add_recipient (LIBSMTP_REC_TO, "obsidian@berlios.de", mailsession);
-  libsmtp_add_recipient (LIBSMTP_REC_TO, "kread@newnet-marketing.de", mailsession);
   libsmtp_add_recipient (LIBSMTP_REC_CC, "libsmtp-test@hotmail.com", mailsession);
-  libsmtp_add_recipient (LIBSMTP_REC_CC, "steve.balmer@microsoft.com", mailsession);
-  libsmtp_add_recipient (LIBSMTP_REC_BCC, "we_love_you@backstreetboys.com", mailsession);
-  libsmtp_add_recipient (LIBSMTP_REC_BCC, "i_love_you_too@backsideboys.com", mailsession);
 
   printf ("Recipients added.\n");
 
@@ -141,7 +137,7 @@ int main(void)
   printf ("MIME headers sent.\n");
 
   /* This sends a line of message body */
-  if (libsmtp_part_send ("Bla!!", mailsession))
+  if (libsmtp_part_send ("Bla!!", strlen ("Bla!!"), mailsession))
   {
     printf ("An error occured while sending the body:\n%s\nLast Response:%s\n", \
       libsmtp_strerr (mailsession), mailsession->LastResponse->str);

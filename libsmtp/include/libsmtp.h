@@ -141,7 +141,7 @@ int libsmtp_header_send (char *, struct libsmtp_session_struct *);
 
 int libsmtp_headers (struct libsmtp_session_struct *);
 
-int libsmtp_body_send_raw (char *, struct libsmtp_session_struct *);
+int libsmtp_body_send_raw (char *, unsigned long int, struct libsmtp_session_struct *);
 
 int libsmtp_body_end (struct libsmtp_session_struct *);
 
@@ -156,5 +156,7 @@ int libsmtp_free (struct libsmtp_session_struct *);
 int libsmtp_int_send (GString *, struct libsmtp_session_struct *, int);
 
 int libsmtp_int_read (GString *, struct libsmtp_session_struct *, int);
+
+int libsmtp_int_send_body (char *, unsigned long int, struct libsmtp_session_struct *);
 
 #endif  /* LIB_SMTP_H */

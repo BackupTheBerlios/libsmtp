@@ -35,7 +35,7 @@ Thu Aug 16 2001 */
 #include "libsmtp.h"
 #include "libsmtp_mime.h"
 
-#define LIBSMTP_DEBUG
+/* #define LIBSMTP_DEBUG */
 
 int libsmtp_mime_headers (struct libsmtp_session_struct *libsmtp_session)
 {
@@ -192,12 +192,11 @@ int libsmtp_mime_headers (struct libsmtp_session_struct *libsmtp_session)
    stage. The data to be sent will to be formatted according to RFC822 and
    the MIME standards. */
 
-int libsmtp_part_send (char *libsmtp_body_data, \
+int libsmtp_part_send (char *libsmtp_body_data, unsigned long int libsmtp_body_length, \
             struct libsmtp_session_struct *libsmtp_session)
 {
 
   struct libsmtp_part_struct *libsmtp_temp_part;
-  GString *libsmtp_temp_gstring;
   int libsmtp_int_errorstate;
   
   /* Headers must have been sent before body data goes out, but we must
@@ -213,6 +212,7 @@ int libsmtp_part_send (char *libsmtp_body_data, \
   {
     /* If we just came from the headers stage, we have to send a blank line
      first */
+    GString *libsmtp_temp_gstring = g_string_new (NULL);
     g_string_assign (libsmtp_temp_gstring, "\n");  
 
     if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 1))
@@ -246,24 +246,28 @@ int libsmtp_part_send (char *libsmtp_body_data, \
   switch (libsmtp_temp_part->Encoding)
   {
     case LIBSMTP_ENC_7BIT:
-      libsmtp_int_errorstate = libsmtp_body_send_raw (libsmtp_body_data, libsmtp_session);
-      break;
+      libsmtp_int_errorstate = libsmtp_int_send_body (libsmtp_body_data, libsmtp_body_length, libsmtp_session);
+    break;
     
     case LIBSMTP_ENC_8BIT:
-      libsmtp_int_errorstate = libsmtp_body_send_raw (libsmtp_body_data, libsmtp_session);
-      break;
+      libsmtp_int_errorstate = libsmtp_int_send_body (libsmtp_body_data, libsmtp_body_length, libsmtp_session);
+    break;
     
     case LIBSMTP_ENC_BINARY:
-      libsmtp_int_errorstate = libsmtp_body_send_raw (libsmtp_body_data, libsmtp_session);
-      break;
+      libsmtp_int_errorstate = libsmtp_int_send_body (libsmtp_body_data, libsmtp_body_length, libsmtp_session);
+    break;
     
     case LIBSMTP_ENC_BASE64:
-      libsmtp_int_errorstate = libsmtp_body_send_raw (libsmtp_body_data, libsmtp_session);
-      break;
+      libsmtp_int_errorstate = libsmtp_int_send_base64 (libsmtp_body_data, libsmtp_body_length, libsmtp_session);
+    break;
   
+    case LIBSMTP_ENC_QUOTED:
+      libsmtp_int_errorstate = libsmtp_int_send_quoted (libsmtp_body_data, libsmtp_body_length, libsmtp_session);
+    break;
+
     default:
-      libsmtp_int_errorstate = libsmtp_body_send_raw (libsmtp_body_data, libsmtp_session);
-      break;
+      libsmtp_int_errorstate = libsmtp_int_send_body (libsmtp_body_data, libsmtp_body_length, libsmtp_session);
+    break;
   }
   
   return libsmtp_int_errorstate;

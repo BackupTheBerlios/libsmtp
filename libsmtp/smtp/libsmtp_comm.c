@@ -134,7 +134,8 @@ int libsmtp_int_send (GString *libsmtp_send_gstring, struct libsmtp_session_stru
   return LIBSMTP_NOERR;
 }
 
-int libsmtp_int_send_body (char *libsmtp_send_string, struct libsmtp_session_struct *libsmtp_session)
+int libsmtp_int_send_body (char *libsmtp_send_string, unsigned long int libsmtp_int_length, \
+         struct libsmtp_session_struct *libsmtp_session)
 {
   int libsmtp_int_bytes;
 
@@ -573,10 +574,9 @@ int libsmtp_header_send (char *libsmtp_header_string, \
    stage. The data to be sent has to be formatted according to RFC822 and
    the MIME standards. */
 
-int libsmtp_body_send_raw (char *libsmtp_body_data, \
+int libsmtp_body_send_raw (char *libsmtp_body_data, unsigned long int libsmtp_int_length, \
             struct libsmtp_session_struct *libsmtp_session)
 {
-  GString *libsmtp_temp_gstring;
 
   /* Headers should have been sent before body data goes out, but we
      must still be in the body stage at most */
@@ -593,6 +593,7 @@ int libsmtp_body_send_raw (char *libsmtp_body_data, \
   /* Headers should have been sent before body data goes out */
   if (libsmtp_session->Stage = LIBSMTP_HEADERS_STAGE)
   {
+    GString *libsmtp_temp_gstring = g_string_new (NULL);
     /* Now let there be a blank line */
     libsmtp_temp_gstring = g_string_new ("\n");
 
@@ -603,7 +604,7 @@ int libsmtp_body_send_raw (char *libsmtp_body_data, \
   /* We now enter the body stage */
   libsmtp_session->Stage = LIBSMTP_BODY_STAGE;
 
-  if (libsmtp_int_send_body (libsmtp_body_data, libsmtp_session))
+  if (libsmtp_int_send_body (libsmtp_body_data, libsmtp_int_length, libsmtp_session))
     return LIBSMTP_ERRORSENDFATAL;
   
   return LIBSMTP_NOERR;
@@ -631,10 +632,10 @@ int libsmtp_body_end (struct libsmtp_session_struct *libsmtp_session)
 
   /* Now let there be a line with only a dot on it */
   
-  if (libsmtp_int_send_body ("\r\n", libsmtp_session))
+  if (libsmtp_int_send_body ("\r\n", 2, libsmtp_session))
     return LIBSMTP_ERRORSENDFATAL;
 
-  if (libsmtp_int_send_body (".\r\n", libsmtp_session))
+  if (libsmtp_int_send_body (".\r\n", 2, libsmtp_session))
     return LIBSMTP_ERRORSENDFATAL;
 
   /* Did you like that body, connisseur? */

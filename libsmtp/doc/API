@@ -50,68 +50,8 @@ MIME SETUP
 
 If you don't set any MIME settings, libsmtp will presume that you want to
 send 7bit US-ASCII text only data. If this is not the case, you should
-configure the session with the MIME functions.
-
-It is now possible to send MIME documents with libsmtp, i. e. non
-US-ASCII mails or binary attachments. Mail MIME types typically are either
-text/plain, text/html or multipart/* (with additional text, image or
-whatever parts attached), in my experience. I never got a mail
-just consisting of a picture and nothing else :). It is support in libsmtp
-however anyway.
-
-Before you enter the header stage, you have to set the MIME type of the
-message. A mail message sent by libsmtp consists of different body "parts".
-Even if your message just contains one block of text, it is a part, if a
-simple one. To create a part, use this function:
-
-  int libsmtp_mime_new (struct libsmtp_part_struct *newpart, \
-       struct libsmtp_part_struct *parentpart, int type, int subtype, \
-       int encoding, char *description, struct libsmtp_session_struct *session);
-
-The function fills in the newpart struct with all data you supply it. If this
-is the first part, parentpart should be 0, otherwise the part ID of the parent
-part. If you just have one part, you can leave this 0 of course. More on
-multiple parts in the MIME file in the doc directory. Type can be one of:
-
-LIBSMTP_MIME_TEXT, LIBSMTP_MIME_MESSAGE, LIBSMTP_MIME_IMAGE,
-LIBSMTP_MIME_AUDIO, LIBSMTP_MIME_VIDEO, LIBSMTP_MIME_APPLICATION,
-LIBSMTP_MIME_MULTIPART or LIBSMTP_MIME_CUSTOM
-
-The following subtypes are predefined (all are prefixed with
-LIBSMTP_MIME_SUB_):
-
-TEXT SUBTYPES: PLAIN, HTML, ENGLISH, RICHTEXT
-MESSAGE SUBTYPES: RFC822, PARTIAL
-IMAGE SUBTYPES: GIF, JPG, PNG, TIFF, MS_BMP, XBITMAP, XPIXMAP,
-    PORTABLE_ANYMAP, PORTABLE_BITMAP, PORTABLE_GRAYMAP, PORTABLE_PIXMAP
-AUDIO SUBTYPES: MPEGVID, MIDI, WAV, AIFF
-VIDEO SUBTYPES: MPEGAUD, MSVIDEO, QUICKTIME, FLI
-APPLICATION SUBTYPES: RTF, POSTSCRIPT, PDF, ZIP, DEBIAN-PACKAGE, EXECUTABLE,
-    GTAR, SHELLSCRIPT, TAR, OCTET_STREAM
-MULTIPART SUBTYPES: MIXED, PARALLEL, DIGEST, ALTERNATIVE
-OTHER: CUSTOM (which can be used with any type)
-
-If you use a non-text, non-message, non-multipart body type, you must set a
-content-encoding that encodes 8BIT data into 7BIT. At the moment there is
-only one : LIBSMTP_ENC_BASE64. Multipart bodies always have to use
-LIBSMTP_ENC_7BIT. Message and text body types can choose between
-LIBSMTP_ENC_7BIT and LIBSMTP_ENC_BASE64. If you are sure your text doesn't
-contain non-7bit characters, you can use LIBSMTP_ENC_7BIT. Otherwise you
-should choose LIBSMTP_ENC_BASE64, which will encode your text in base64. I
-will try to add quoted-printable encoding in the near future, which actually
-is quite necessary for 8bit text encodings :)
-
-The description is a text string in the US-ASCII charset (for now) which
-describes the part. Is this is optional, you can set it to NULL if you don't
-want to describe this part (like the main part for example).
-
-
-When you specify custom MIME type, you have to set the MIME type with:
-
-int libsmtp_body_type_custom (char *, struct libsmtp_session_struct *)
-
-and the subtype with:
-libsmtp_body_subtype_custom (char *name, struct libsmtp_session_struct *data)
+configure the session with the MIME functions. Please see the file MIME for
+more information on this.
 
 
 
@@ -163,22 +103,16 @@ info.
 Returns: 0 if ok, other see libsmtp_errors
 
 
-int libsmtp_body_send_raw (char *line, struct libsmtp_session_struct *data)
+int libsmtp_body_send_raw (char *line, unsigned long int length, struct libsmtp_session_struct *data)
 
 This function sends one line of body text. Please note that with this
 function you must convert the document into SMTP and MIME conformant data
 yourself. According to RC822, a may have up to 998 characters and should be
 ended with \r\n (CRLF). If you send non US-ASCII data (i.e. 8bit), lines
 must not be longer than 76 characters and be encoded with quoted printable
-or base64 encoding. Please see RFC822 for more information.
+or base64 encoding. Please see RFC822 for more information. line points to the
+data to be send, length says how many bytes to send.
 
-
-int libsmtp_body_send (char *line, struct libsmtp_session_struct *data)
-
-This function sends body text. This will be formatted according to the
-options you set for MIME handling. You can send any type of data as long as
-you set the correct MIME encoding type. Please note that at the moment
-libsmtp won't check that you don't send 8bit data without encoding it.
 
 
 int libsmtp_close (struct libsmtp_session_struct *data)

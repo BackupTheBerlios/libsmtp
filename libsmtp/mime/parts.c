@@ -35,7 +35,7 @@ Thu Aug 16 2001 */
 #include "libsmtp.h"
 #include "libsmtp_mime.h"
 
-#undef LIBSMTP_DEBUG
+/* #undef LIBSMTP_DEBUG */
 
 /* We need some definitions here first. These arrays hold the name tags
    of all MIME settings */
@@ -376,6 +376,13 @@ int libsmtp_int_nextpart (struct libsmtp_session_struct *libsmtp_session)
           g_string_sprintf (libsmtp_temp_gstring, "Content-Type: %s/%s", \
              libsmtp_int_lookup_mime_type (libsmtp_temp_part), \
              libsmtp_int_lookup_mime_subtype (libsmtp_temp_part));
+          
+          if (strlen(libsmtp_temp_part->Description->str))
+          {
+            g_string_append (libsmtp_temp_gstring, ";name=\"");
+            g_string_append (libsmtp_temp_gstring, libsmtp_temp_part->Description->str);
+            g_string_append (libsmtp_temp_gstring, "\"");
+          }
 
           #ifdef LIBSMTP_DEBUG
             printf ("libsmtp_mime_headers: %s. Type: %d/%d\n", libsmtp_temp_gstring->str, \
@@ -403,7 +410,7 @@ int libsmtp_int_nextpart (struct libsmtp_session_struct *libsmtp_session)
     
           /* We need a transfer encoding, too */
     
-          g_string_sprintf (libsmtp_temp_gstring, "\r\nContent-Transfer-Encoding: %s\r\n", \
+          g_string_sprintf (libsmtp_temp_gstring, "\r\nContent-Transfer-Encoding: %s\r\n\r\n", \
              libsmtp_int_lookup_mime_encoding (libsmtp_temp_part));
     
           #ifdef LIBSMTP_DEBUG
@@ -687,7 +694,7 @@ const char *libsmtp_int_lookup_mime_charset (struct libsmtp_part_struct *libsmtp
 
 const char *libsmtp_int_lookup_mime_encoding (struct libsmtp_part_struct *libsmtp_int_part)
 {
-  if ((libsmtp_int_part->Encoding >= 0) && (libsmtp_int_part->Encoding < LIBSMTP_MAX_ENC))
+  if ((libsmtp_int_part->Encoding >= 0) && (libsmtp_int_part->Encoding <= LIBSMTP_MAX_ENC))
     return libsmtp_mime_encodings[libsmtp_int_part->Encoding];
   else
     return NULL;

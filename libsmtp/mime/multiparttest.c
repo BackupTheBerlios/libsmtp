@@ -32,18 +32,22 @@ Thu Aug 16 2001 */
  *******************************************************************/
 
 #include <glib.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include "libsmtp.h"
 #include "libsmtp_mime.h"
 
 int main(void)
 {
-  int test_temp=0;
+  int test_temp=0, jpegfile_read;
+  FILE *jpegfile;
+  unsigned char *jpegbuffer, temp_string[256];
   
   /* This struct holds all session data. You need one per mail server
      connection */
   struct libsmtp_session_struct *mailsession;
-  struct libsmtp_part_struct *mainpart, *textpart, *htmlpart, *temppart;
+  struct libsmtp_part_struct *mainpart, *textpart, *htmlpart, *imagepart, *eightbitpart, *temppart;
   
   /* We need these to look through the GLists later on */
   GList *temp_glist;
@@ -56,7 +60,7 @@ int main(void)
   libsmtp_set_environment ("libsmtp-test@hotmail.com","libsmtp Test", 0, mailsession);
   
   /* Now we add some recipients */
-  libsmtp_add_recipient (LIBSMTP_REC_TO, "kevin.read@newnet-marketing.de", mailsession);
+  libsmtp_add_recipient (LIBSMTP_REC_TO, "libsmtp@obsidian.de", mailsession);
 
   printf ("1 recipient added.\n");
 
@@ -81,8 +85,28 @@ int main(void)
     printf ("Error adding part: %s\n", libsmtp_strerr (mailsession));
     return 1;
   }
+  
+  imagepart = libsmtp_part_new (mainpart, LIBSMTP_MIME_IMAGE, LIBSMTP_MIME_SUB_JPG, LIBSMTP_ENC_BASE64, LIBSMTP_CHARSET_NOCHARSET, "Test MIME Image part", mailsession);
+  if (imagepart == NULL)
+  {
+    printf ("Error adding part: %s\n", libsmtp_strerr (mailsession));
+    return 1;
+  }
+  
+  eightbitpart = libsmtp_part_new (mainpart, LIBSMTP_MIME_TEXT, LIBSMTP_MIME_SUB_PLAIN, LIBSMTP_ENC_QUOTED, LIBSMTP_CHARSET_ISO8859_1, "Test MIME text part (eightbit)", mailsession);
+  if (eightbitpart == NULL)
+  {
+    printf ("Error adding part: %s\n", libsmtp_strerr (mailsession));
+    return 1;
+  }
  
   printf ("Parts added.\n");
+
+  if (!(jpegfile=fopen("../gnu-head-sm.jpg", "r")))
+  {
+    printf ("Error reading JPG file.\n");
+    return 1;
+  }
 
   /* This starts the SMTP connection */
   if (libsmtp_connect ("container",0,0,mailsession))
@@ -149,7 +173,9 @@ int main(void)
   printf ("MIME headers sent.\n");
 
   /* This sends a line of message body */
-  if (libsmtp_part_send ("Bla!!", mailsession))
+  strcpy (temp_string, "This is a text in plaintext.\n");
+
+  if (libsmtp_part_send (temp_string, strlen (temp_string), mailsession))
   {
     printf ("An error occured while sending the body:\n%s\nLast Response:%s\n", \
       libsmtp_strerr (mailsession), mailsession->LastResponse->str);
@@ -180,8 +206,11 @@ int main(void)
 
   printf ("Now in second body part.\n");
 
+  /* What we need is a little test HTML */
+  strcpy (temp_string, "<html><body><h1>Blurb.</h1></body></html>");
+
   /* Lets talk a little HTML */
-  if (libsmtp_part_send ("<html><body><h1>Blurb.</h1></body></html>", mailsession))
+  if (libsmtp_part_send (temp_string, strlen (temp_string), mailsession))
   {
     printf ("An error occured while sending the body:\n%s\nLast Response:%s\n", \
       libsmtp_strerr (mailsession), mailsession->LastResponse->str);
@@ -195,6 +224,79 @@ int main(void)
   }
 
   printf ("Second part sent.\n");
+
+  /* This will switch to the third body part */
+  if (libsmtp_part_next (mailsession))
+  {
+    printf ("An error occured while sending the body:\n%s\nLast Response:%s\n", \
+      libsmtp_strerr (mailsession), mailsession->LastResponse->str);
+    printf ("\nAll in all %u bytes of dialogue data (%u lines) were sent.\n",
+      mailsession->DialogueBytes, mailsession->DialogueSent);
+    printf ("%u bytes of header data (%u lines) were sent.\n",
+       mailsession->HeaderBytes, mailsession->HeadersSent);
+    printf ("%lu bytes of body data were sent.\n", mailsession->BodyBytes);
+
+    return mailsession->ErrorCode;
+  }
+
+  printf ("Now in third body part.\n");
+  
+  /* We need to read the jpeg file */
+  
+  jpegbuffer=malloc (4098);
+  
+  while ((jpegfile_read = fread (jpegbuffer, 1, 4096, jpegfile)))
+
+    /* Then we send each chunk */
+  if (libsmtp_part_send (jpegbuffer, jpegfile_read, mailsession))
+  {
+    printf ("An error occured while sending the body:\n%s\nLast Response:%s\n", \
+      libsmtp_strerr (mailsession), mailsession->LastResponse->str);
+    printf ("\nAll in all %u bytes of dialogue data (%u lines) were sent.\n",
+      mailsession->DialogueBytes, mailsession->DialogueSent);
+    printf ("%u bytes of header data (%u lines) were sent.\n",
+       mailsession->HeaderBytes, mailsession->HeadersSent);
+    printf ("%lu bytes of body data were sent.\n", mailsession->BodyBytes);
+
+    return mailsession->ErrorCode;
+  }
+
+  printf ("Third part sent.\n");  
+
+  /* This will switch to the next body part */
+  if (libsmtp_part_next (mailsession))
+  {
+    printf ("An error occured while sending the body:\n%s\nLast Response:%s\n", \
+      libsmtp_strerr (mailsession), mailsession->LastResponse->str);
+    printf ("\nAll in all %u bytes of dialogue data (%u lines) were sent.\n",
+      mailsession->DialogueBytes, mailsession->DialogueSent);
+    printf ("%u bytes of header data (%u lines) were sent.\n",
+       mailsession->HeaderBytes, mailsession->HeadersSent);
+    printf ("%lu bytes of body data were sent.\n", mailsession->BodyBytes);
+
+    return mailsession->ErrorCode;
+  }
+
+  printf ("Now in fourth body part.\n");
+
+  /* What we need is a little test eightbit blurb */
+  strcpy (temp_string, "üöä blurb!üößäÄ!5&9§$");
+
+  /* Lets send it!! */
+  if (libsmtp_part_send (temp_string, strlen (temp_string), mailsession))
+  {
+    printf ("An error occured while sending the body:\n%s\nLast Response:%s\n", \
+      libsmtp_strerr (mailsession), mailsession->LastResponse->str);
+    printf ("\nAll in all %u bytes of dialogue data (%u lines) were sent.\n",
+      mailsession->DialogueBytes, mailsession->DialogueSent);
+    printf ("%u bytes of header data (%u lines) were sent.\n",
+       mailsession->HeaderBytes, mailsession->HeadersSent);
+    printf ("%lu bytes of body data were sent.\n", mailsession->BodyBytes);
+
+    return mailsession->ErrorCode;
+  }
+
+  printf ("Fourth part sent.\n");
   
   /* This ends the body part */
   if (libsmtp_body_end (mailsession))
