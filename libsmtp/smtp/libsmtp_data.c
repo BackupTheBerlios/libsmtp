@@ -26,7 +26,10 @@ Thu Aug 16 2001 */
 
 #include <glib.h>
 
+#include "../config.h"
+
 #include "libsmtp.h"
+
 
 /* This function returns a pointer to an allocated libsmtp_session_struct
    All GStrings are initialized. */
@@ -47,7 +50,7 @@ struct libsmtp_session_struct *libsmtp_session_initialize (void)
   libsmtp_session->Subject = g_string_new (NULL);
   libsmtp_session->LastResponse = g_string_new (NULL);
 
-  #ifdef LIBSMTP_USE_MIME
+  #ifdef WITH_MIME
     libsmtp_session->Parts = NULL;
     libsmtp_session->NumParts = 0;
   #endif
@@ -79,17 +82,17 @@ int libsmtp_free (struct libsmtp_session_struct *libsmtp_session)
   libsmtp_session->ToResponse = g_list_first (libsmtp_session->ToResponse);
   for (libsmtp_temp=0; libsmtp_temp<g_list_length (libsmtp_session->ToResponse); \
        libsmtp_temp++)
-    free (g_list_nth_data (libsmtp_session->ToResponse->data, libsmtp_temp));
+    free (g_list_nth_data (libsmtp_session->ToResponse, libsmtp_temp));
   
   libsmtp_session->CCResponse = g_list_first (libsmtp_session->CCResponse);
   for (libsmtp_temp=0; libsmtp_temp<g_list_length (libsmtp_session->CCResponse); \
        libsmtp_temp++)
-    free (g_list_nth_data (libsmtp_session->CCResponse->data, libsmtp_temp));
+    free (g_list_nth_data (libsmtp_session->CCResponse, libsmtp_temp));
 
   libsmtp_session->BCCResponse = g_list_first (libsmtp_session->BCCResponse);
   for (libsmtp_temp=0; libsmtp_temp<g_list_length (libsmtp_session->BCCResponse); \
        libsmtp_temp++)
-    free (g_list_nth_data (libsmtp_session->BCCResponse->data, libsmtp_temp));
+    free (g_list_nth_data (libsmtp_session->BCCResponse, libsmtp_temp));
   
   g_list_free (libsmtp_session->ToResponse);
   g_list_free (libsmtp_session->CCResponse);
@@ -125,6 +128,9 @@ int libsmtp_set_environment (char *libsmtp_int_From, char *libsmtp_int_Subject,\
 int libsmtp_add_recipient (int libsmtp_int_rec_type, char *libsmtp_int_address,
       struct libsmtp_session_struct *libsmtp_session)
 {
+  /* Do we need a copy? */
+  char *libsmtp_int_copy;
+  
   /* Lets just check that rec_type isn't an invalid value */
   if ((libsmtp_int_rec_type < 0) || (libsmtp_int_rec_type > LIBSMTP_REC_MAX))
   {
@@ -142,15 +148,16 @@ int libsmtp_add_recipient (int libsmtp_int_rec_type, char *libsmtp_int_address,
   switch (libsmtp_int_rec_type)
   {
     case (LIBSMTP_REC_TO):
-      libsmtp_session->To = g_list_append (libsmtp_session->To, libsmtp_int_address);
+      libsmtp_int_copy = strdup (libsmtp_int_address);
+      libsmtp_session->To = g_list_append (libsmtp_session->To, libsmtp_int_copy);
       break;
 
     case (LIBSMTP_REC_CC):
-      libsmtp_session->CC = g_list_append (libsmtp_session->CC, libsmtp_int_address);
+      libsmtp_session->CC = g_list_append (libsmtp_session->CC, libsmtp_int_copy);
       break;
 
     case (LIBSMTP_REC_BCC):
-      libsmtp_session->BCC = g_list_append (libsmtp_session->BCC, libsmtp_int_address);
+      libsmtp_session->BCC = g_list_append (libsmtp_session->BCC, libsmtp_int_copy);
       break;
 
     default:

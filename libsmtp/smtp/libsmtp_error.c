@@ -24,9 +24,11 @@ Kevin Read <obsidian@berlios.de>
 Thu Aug 16 2001 */
 
 #include <glib.h>
+
+#include "../config.h"
 #include "libsmtp.h"
 
-#ifdef LIBSMTP_USE_MIME
+#ifdef WITH_MIME
   #include "libsmtp_mime.h"
 #endif
 
@@ -64,7 +66,7 @@ const char *libsmtp_strerr (struct libsmtp_session_struct *libsmtp_session)
   /* This shouldn't really happen, but this is not C++, we can't prevent
      non-libsmtp functions from writing to these ...
      There are no higher error codes than the MIME ones */
-  #ifdef LIBSMTP_USE_MIME
+  #ifdef WITH_MIME
     if (libsmtp_session->ErrorCode > LIBSMTP_MAX_MIME_ERRNO)
     {
       printf ("Undefined error code: %d\n", libsmtp_session->ErrorCode);

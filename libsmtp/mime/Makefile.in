@@ -1,38 +1,92 @@
-# Generated automatically from Makefile.in by configure.
+# Main Makefile for Kevins stupid "libsmtp" library
+# Copyright (C) 2001 Kevin Read.
 
-FLAGS=-DLIBSMTP_USE_MIME -g -I../include
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
 
-# You might want to see debug stuff
-# FLAGS=-DLIBSMTP_USE_MIME -g -I../include -DLIBSMTP_DEBUG -DLIBSMTP_QUOTED_DEBUG
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 
-all:	libsmtp_mime.a mimetest multiparttest
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-libsmtp_mime.a:	parts.o comm.o base64.o quoted.o
-	ar -r libsmtp_mime.a parts.o comm.o base64.o quoted.o
+SHELL = /bin/sh
+top_srcdir = @top_srcdir@
+srcdir = @srcdir@
+VPATH = @srcdir@
 
-parts.o:	parts.c
-	gcc `glib-config --cflags` $(FLAGS) -c -o parts.o parts.c
+.SUFFIXES:
+.SUFFIXES: .c .o
 
-comm.o:	comm.c
-	gcc `glib-config --cflags` $(FLAGS) -c -o comm.o comm.c
+OPT=-g -O
 
-base64.o:	base64.c
-	gcc `glib-config --cflags` $(FLAGS) -c -o base64.o base64.c
+AR = ar
+AR_FLAGS = rc
+RANLIB = @RANLIB@
 
-quoted.o:	quoted.c
-	gcc `glib-config --cflags` $(FLAGS) -c -o quoted.o quoted.c
+CC = @CC@
+CFLAGS = -I. -I../include `glib-config --cflags` @CFLAGS@ @addtl_flags@
+LDFLAGS = -L. -L../smtp @LDFLAGS@
+LIBS = -lsmtp -lsmtp_mime @LIBS@
+INSTALL = @INSTALL@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = $(exec_prefix)/bin
+libdir = $(prefix)/lib
+infodir = $(prefix)/info
 
-mimetest.o:	mimetest.c libsmtp_mime.a
-	gcc $(FLAGS) -c mimetest.c -o mimetest.o `glib-config --cflags`
+SOURCES=
+DOCS=
+MISC=configure mkinstalldirs install-sh aclocal.m4
+OBJS=
+LIB_OBJS=base64.o comm.o parts.o quoted.o
 
-mimetest:	mimetest.o ../smtp/libsmtp.a libsmtp_mime.a
-	gcc $(FLAGS) -o mimetest -L. -L../smtp mimetest.o -lsmtp -lsmtp_mime `glib-config --libs` -lglib
+all: libsmtp_mime.a
 
-multiparttest.o:	multiparttest.c libsmtp_mime.a
-	gcc $(FLAGS) -c multiparttest.c -o multiparttest.o `glib-config --cflags`
+# ??? here I make the bindir, libdir and infodir directories; you
+# might not need all of these.  also, I assumed the names PROG and
+# libMYPROG.a for the program and library.
+install: all
+	$(top_srcdir)/mkinstalldirs $(libdir)
+	$(INSTALL) libsmtp_mime.a $(libdir)/libsmtp_mime.a
 
-multiparttest:	multiparttest.o ../smtp/libsmtp.a libsmtp_mime.a
-	gcc $(FLAGS) -o multiparttest -L. -L../smtp multiparttest.o -lsmtp -lsmtp_mime `glib-config --libs` -lglib
+uninstall:
+	/bin/rm -f $(libdir)/libsmtp_mime.a
+
+libsmtp_mime.a: $(LIB_OBJS)
+	/bin/rm -f libsmtp_mime.a
+	$(AR) $(AR_FLAGS) libsmtp_mime.a $(LIB_OBJS)
+	$(RANLIB) libsmtp_mime.a
 
 clean:
-	rm *.o *.a mimetest multiparttest
+	/bin/rm -f core *.o $(OBJS) $(LIB_OBJS) libsmtp_mime.a
+
+distclean: clean
+	/bin/rm -f Makefile config.h config.status config.cache config.log
+
+mostlyclean: clean
+
+maintainer-clean: clean
+
+# automatic re-running of configure if the ocnfigure.in file has changed
+#${srcdir}/configure: configure.in aclocal.m4
+#	cd ${srcdir} &#38;&#38; autoconf
+
+## autoheader might not change config.h.in, so touch a stamp file
+#${srcdir}/config.h.in: stamp-h.in
+#${srcdir}/stamp-h.in: configure.in aclocal.m4
+#		cd ${srcdir} &#38;&#38; autoheader
+#		echo timestamp &#62; ${srcdir}/stamp-h.in
+
+#config.h: stamp-h
+#stamp-h: config.h.in config.status
+#	./config.status
+#Makefile: Makefile.in config.status
+#	./config.status
+#config.status: configure
+#	./config.status --recheck

@@ -28,6 +28,8 @@ Thu Aug 16 2001 */
   #include <glib.h>
 /* #endif */
 
+#include "../config.h"
+
 #include "libsmtp.h"
 
 /* internal communication functions */
@@ -57,7 +59,7 @@ int libsmtp_int_read (GString *libsmtp_gstring_read, struct libsmtp_session_stru
     return LIBSMTP_ERRORREAD;
   }
 
-  #ifdef DEBUG_LIBSMTP
+  #ifdef LIBSMTP_DEBUG
     printf ("DEBUG in read: %s\n", libsmtp_int_rec_buffer);
   #endif
   
@@ -102,7 +104,7 @@ int libsmtp_int_send (GString *libsmtp_send_gstring, struct libsmtp_session_stru
 {
   int libsmtp_int_bytes;
 
-  #ifdef DEBUG_LIBSMPT
+  #ifdef LIBSMTP_DEBUG
     printf ("DEBUG in send: %s\n", libsmtp_send_gstring->str);
   #endif
   
@@ -139,7 +141,7 @@ int libsmtp_int_send_body (char *libsmtp_send_string, unsigned long int libsmtp_
 {
   int libsmtp_int_bytes;
 
-  #ifdef DEBUG_LIBSMTP
+  #ifdef LIBSMTP_DEBUG
     printf ("DEBUG in bsend : %s\n", libsmtp_send_string);
   #endif
   
@@ -181,7 +183,7 @@ int libsmtp_dialogue (struct libsmtp_session_struct *libsmtp_session)
   /* First we check if sender, subject and at least one recipient has
      been set */
   
-  #ifdef DEBUG_LIBSMTP
+  #ifdef LIBSMTP_DEBUG
     printf ("DEBUG:List length: %d!\n", g_list_length (libsmtp_session->To));
   #endif
   
@@ -231,6 +233,9 @@ int libsmtp_dialogue (struct libsmtp_session_struct *libsmtp_session)
          libsmtp_temp++)
   {
     libsmtp_temp_glist=g_list_nth (libsmtp_session->To, libsmtp_temp);
+    #ifdef LIBSMTP_DEBUG
+      printf ("To: %s\n", libsmtp_temp_glist->data);
+    #endif
     g_string_sprintf (libsmtp_temp_gstring, "RCPT TO: %s\r\n", \
         libsmtp_temp_glist->data);
     
@@ -644,7 +649,7 @@ int libsmtp_body_end (struct libsmtp_session_struct *libsmtp_session)
   if (libsmtp_int_read (libsmtp_temp_gstring, libsmtp_session, 2))
     return LIBSMTP_ERRORREADFATAL;
 
-  #ifdef DEBUG_LIBSMTP
+  #ifdef LIBSMTP_DEBUG
     printf ("DEBUG: %s\n", libsmtp_session->LastResponse);
   #endif
  

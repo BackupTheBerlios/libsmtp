@@ -1,31 +1,94 @@
+# Main Makefile for Kevins stupid "libsmtp" library
+# Copyright (C) 2001 Kevin Read.
 
-FLAGS=-DLIBSMTP_USE_MIME -g -I../include
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
 
-all:	libsmtp.a testapp
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 
-libsmtp.a:	libsmtp_connection.o libsmtp_error.o libsmtp_data.o libsmtp_comm.o
-	ar -r libsmtp.a libsmtp_connection.o libsmtp_error.o libsmtp_data.o libsmtp_comm.o
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-libsmtp.o:	libsmtp.c
-	gcc `glib-config --cflags` $(FLAGS) -c -o libsmtp.o libsmtp.c
+SHELL = /bin/sh
+top_srcdir = @top_srcdir@
+srcdir = @srcdir@
+VPATH = @srcdir@
 
-libsmtp_connection.o:	libsmtp_connection.c
-	gcc `glib-config --cflags` $(FLAGS) -c -o libsmtp_connection.o libsmtp_connection.c
+.SUFFIXES:
+.SUFFIXES: .c .o
 
-libsmtp_comm.o:	libsmtp_comm.c
-	gcc `glib-config --cflags` $(FLAGS) -c -o libsmtp_comm.o libsmtp_comm.c
+OPT=-g -O
 
-libsmtp_error.o:	libsmtp_error.c
-	gcc `glib-config --cflags` $(FLAGS) -c -o libsmtp_error.o libsmtp_error.c
+AR = ar
+AR_FLAGS = rc
+RANLIB = @RANLIB@
 
-libsmtp_data.o:	libsmtp_data.c
-	gcc `glib-config --cflags` $(FLAGS) -c -o libsmtp_data.o libsmtp_data.c
+CC = @CC@
+CFLAGS = -I. -I../include `glib-config --cflags` @CFLAGS@ @addtl_flags@
+LDFLAGS = -L. @LDFLAGS@
+LIBS = -lsmtp @LIBS@
+INSTALL = @INSTALL@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = $(exec_prefix)/bin
+libdir = $(prefix)/lib
+infodir = $(prefix)/info
 
-testapp.o:	testapp.c
-	gcc $(FLAGS) -c -o testapp.o testapp.c `glib-config --cflags`
+SOURCES=libsmtp_comm.c libsmtp_connection.c libsmtp_data.c \
+        libsmtp_error.c
+DOCS=
+MISC=configure mkinstalldirs install-sh aclocal.m4
+OBJS=
+LIB_OBJS=libsmtp_comm.o libsmtp_connection.o libsmtp_data.o libsmtp_error.o
+LIB_NAME=libsmtp
 
-testapp:	testapp.o libsmtp.a
-	gcc $(FLAGS) -o testapp -L. testapp.o -lsmtp `glib-config --libs` -lglib
+all: $(LIB_NAME).a
+
+# ??? here I make the bindir, libdir and infodir directories; you
+# might not need all of these.  also, I assumed the names PROG and
+# libMYPROG.a for the program and library.
+install: all
+	$(top_srcdir)/mkinstalldirs $(libdir)
+	$(INSTALL) libsmtp_mime.a $(libdir)/$(LIB_NAME).a
+
+uninstall:
+	/bin/rm -f $(libdir)/$(LIB_NAME).a
+
+$(LIB_NAME).a: $(LIB_OBJS)
+	/bin/rm -f $(LIB_NAME).a
+	$(AR) $(AR_FLAGS) $(LIB_NAME).a $(LIB_OBJS)
+	$(RANLIB) $(LIB_NAME).a
 
 clean:
-	rm testapp *.o *.a
+	/bin/rm -f core *.o $(OBJS) $(LIB_OBJS) $(LIB_NAME).a
+
+distclean: clean
+	/bin/rm -f Makefile config.h config.status config.cache config.log
+
+mostlyclean: clean
+
+maintainer-clean: clean
+
+# automatic re-running of configure if the ocnfigure.in file has changed
+#${srcdir}/configure: configure.in aclocal.m4
+#	cd ${srcdir} &#38;&#38; autoconf
+
+# autoheader might not change config.h.in, so touch a stamp file
+#${srcdir}/config.h.in: stamp-h.in
+#${srcdir}/stamp-h.in: configure.in aclocal.m4
+#		cd ${srcdir} &#38;&#38; autoheader
+#		echo timestamp &#62; ${srcdir}/stamp-h.in
+
+#config.h: stamp-h
+#stamp-h: config.h.in config.status
+#	./config.status
+#Makefile: Makefile.in config.status
+#	./config.status
+#config.status: configure
+#	./config.status --recheck

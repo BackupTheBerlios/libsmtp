@@ -26,14 +26,15 @@ Thu Aug 16 2001 */
 
 /* This will only be included when MIME is enabled */
 
-#ifdef LIBSMTP_USE_MIME
-
 /* #ifndef __G_LIB_H__ */
   #include <glib.h>
 /* #endif */
 
+#include "../config.h"
+
 #include "libsmtp.h"
 #include "libsmtp_mime.h"
+
 
 /* #undef LIBSMTP_DEBUG */
 
@@ -700,4 +701,3 @@ const char *libsmtp_int_lookup_mime_encoding (struct libsmtp_part_struct *libsmt
     return NULL;
 }
 
-#endif /* LIBSMTP_USE_MIME */

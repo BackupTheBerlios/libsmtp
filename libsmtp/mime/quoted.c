@@ -26,20 +26,17 @@ Thu Aug 16 2001 */
 
 /* This will only be included when MIME is enabled */
 
-#ifdef LIBSMTP_USE_MIME
-
 /* #ifndef __G_LIB_H__ */
   #include <glib.h>
 /* #endif */
 
 #define LINELEN 72		      /* Encoded line length (max 76) */
 
+#include "../config.h"
+
 #include "libsmtp.h"
 #include "libsmtp_mime.h"
 
-/*
-#define LIBSMTP_DEBUG
-#define LIBSMTP_QUOTED_DEBUG */
 
 /* This function will send data in a part, encoded in quoted printable format.
    It will not perform any checks whatsoever. */
@@ -202,4 +199,3 @@ int libsmtp_int_send_quoted (char *libsmtp_int_data, unsigned long int libsmtp_i
   return LIBSMTP_NOERR;
 }
 
-#endif /* LIBSMTP_USE_MIME */

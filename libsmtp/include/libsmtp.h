@@ -7,11 +7,6 @@
   #include <glib.h>
 #endif
 
-/*
-#ifdef LIBSMTP_USE_MIME
-  #include "libsmtp_mime.h"
-#endif
-*/
 
 /* These flags show what the server can do */
 
@@ -113,7 +108,7 @@ struct libsmtp_session_struct {
   unsigned int HeaderBytes;	/* Bytes of header data sent */
   unsigned long int BodyBytes;	/* Bytes of body data sent */
   
-  #ifdef LIBSMTP_USE_MIME
+  #ifdef WITH_MIME
     GNode *Parts;		/* N-Tree of body parts (MIME stuff) */
     int NumParts;		/* Number of body parts */
     struct libsmtp_part_struct *PartNow;	/* Part we are sending now */

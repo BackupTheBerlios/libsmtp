@@ -33,6 +33,7 @@ Thu Aug 16 2001 */
 #include <netinet/in.h>
 #include <string.h>
 
+#include "../config.h"
 #include "libsmtp.h"
 
 

@@ -26,14 +26,15 @@ Thu Aug 16 2001 */
 
 /* This will only be included when MIME is enabled */
 
-#ifdef LIBSMTP_USE_MIME
-
 /* #ifndef __G_LIB_H__ */
   #include <glib.h>
 /* #endif */
 
+#include "../config.h"
+
 #include "libsmtp.h"
 #include "libsmtp_mime.h"
+
 
 /* #define LIBSMTP_DEBUG */
 
@@ -44,6 +45,8 @@ int libsmtp_mime_headers (struct libsmtp_session_struct *libsmtp_session)
    GString *libsmtp_temp_gstring;
    char *libsmtp_temp_string;
    struct libsmtp_part_struct *libsmtp_temp_part;
+   
+   libsmtp_temp_gstring=g_string_new (NULL);
 
   /* Are we at the end of the dialogue stage, but haven't sent the
      DATA yet? */
@@ -58,7 +61,7 @@ int libsmtp_mime_headers (struct libsmtp_session_struct *libsmtp_session)
   if (libsmtp_session->Stage < LIBSMTP_DATA_STAGE)
   {
     /* Great finality. After this no more dialogue can go on */
-    libsmtp_temp_gstring = g_string_new ("DATA\r\n");
+    g_string_assign (libsmtp_temp_gstring, "DATA\r\n");
   
     if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 2))
       return LIBSMTP_ERRORSENDFATAL;
@@ -314,4 +317,3 @@ int libsmtp_part_next (struct libsmtp_session_struct *libsmtp_session)
   return LIBSMTP_NOERR;
 }
 
-#endif /* LIBSMTP_USE_MIME */
