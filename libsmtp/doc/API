@@ -36,6 +36,12 @@ int libsmtp_add_recipient (int recipient_type, char *address, struct
 This function will add the address to the recipient of this session.
 recipient_type may be one of LIBSMTP_REC_TO, LIBSMTP_REC_CC,
 LIBSMTP_REC_BCC. This will be added to the linked list internally.
+An address must be of the RFC822-compliant type, eg:
+Kevin Read <obsidian@berlios.de>
+"Kevin Read" <obsidian@berlios.de>
+<obsidian@berlios.de>
+obsidian@berlios.de
+
 Returns: 0 for success, otherwise see libsmtp_errno.
 
 

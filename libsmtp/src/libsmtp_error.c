@@ -1,7 +1,7 @@
 /*
   This is a library to send mail via SMTP
    
-Copyright © 2001 Kevin Read <myself@obsidian.de>
+Copyright © 2001 Kevin Read <obsidian@berlios.de>
 
 This software is available under the GNU Lesser Public License as described
 in the COPYING file.
@@ -20,38 +20,12 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free
 Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-Kevin Read <myself@obsidian.de>
+Kevin Read <obsidian@berlios.de>
 Thu Aug 16 2001 */
 
 #include <glib.h>
 #include "libsmtp.h"
 
-/* old libsmtp_sendmail func_
-
-  return values:
-  
-  0 ok, mail sent to server
-  1 socket couldn't be created
-  2 mailserver unknown
-  3 connection to mailserver failed
-  4 unable to read from socket
-  5 mailserver didn't greet correctly (ie its no rfc-conform smtp)
-  6 unable to send to socket
-  7 mailserver didn't accept our HELO
-  8 mailserver didn't accept our MAIL FROM
-  9 mailserver didn't accept our RCPT TO
-  10 mailserver didn't like us to DATA
-  11 mailserver rejected mail after .
-  12 Can't get local hostname
-  13 sender address incomplete
-  14 recipient address incomplete
-  15 no 8bit support on server side
-  16 8bit check said 8bit chars in body
-  17 sendmail called without libsmtp_init
-  18 malloc error
-  19 unbalanced < in address
-  */
-  
 const char *libsmtp_strerr_strings_fatal[] = {
   "No error",   /* 0 */
   "Unable to create local socket",
@@ -62,7 +36,8 @@ const char *libsmtp_strerr_strings_fatal[] = {
   "Can't find our hostname",
   "Unable to send to socket", /* 7 */
   "Server won't accept sender",
-  "Server rejected mail!!"
+  "Server rejected mail!!",
+  "Server won't accept DATA command"
 };
 
 const char *libsmtp_strerr_strings_nonfatal[] = {

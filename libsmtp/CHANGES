@@ -1,3 +1,22 @@
+0.7.7 * This is a total rewrite :)
+
+      * Everything is better now. You should love each other *g
+
+      * Project hosted on libsmtp.berlios.de now
+
+      * Docmentation is quite good now, see doc/API
+
+      * Support for multiple recipients
+
+      * Support for Carbon Copy and Blind Carbon Copy
+
+      * I guess its thread-safe now
+
+      * Hooks for TSL there
+ 
+      * The project is under the LGPL now
+
+
 0.7.5 * Cleaned up the code, many small bugs fixed
     
     * Integrated code cleanups and optimizations from Sean Reifschneider

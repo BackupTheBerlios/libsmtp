@@ -1,0 +1,20 @@
+
+I think autoconf is above me. For now, you'll have to do the following steps
+to compile:
+
+1) ./configure
+   Ignore all the error messages :)
+
+2) cd src
+
+3) make
+   Hold your breath now...
+
+Now its up to you to do the rest, like copying the library to anyplace where
+its useful, i.e. /usr/lib. The "testapp" application demonstrates the use of
+libsmtp. You should adjust the mailserver address in "testapp.c" otherwise
+your mail will just be rejected. You can send to the addresses that are
+preconfigured in testapp.c if you like, they are sorted by my procmail and
+get thrown away, so don't worry. If you like, you can set a funny email (or
+your email address) in the From:-field, and my procmail script will save
+them. :)
