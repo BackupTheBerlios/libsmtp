@@ -10,8 +10,9 @@ programs, too.
 
 You can find updates at http://libsmtp.berlios.de
 
-Please note that this a development version. The next stable release will be
-0.8. libsmtp-0.7.5 and below are deprecated.
+Please note that this a development version. Please read the BUGS and TODO
+files in the doc directory. The next stable release will be 0.8.
+libsmtp-0.7.5 and below are deprecated.
 
 See the file doc/API and doc/MIME for programming information. The source code
 and the test application are quite freely documented, too. Any patches, bug

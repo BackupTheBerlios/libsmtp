@@ -187,12 +187,26 @@ struct libsmtp_part_struct *libsmtp_part_new \
   return libsmtp_int_part;
 }
                            
-/*        
-  int libsmtp_mime_type_custom (char *, struct libsmtp_part_struct *,\
-        struct libsmtp_session_struct *);
+        
+int libsmtp_mime_type_custom (char *libsmtp_int_custom_type, \
+       struct libsmtp_part_struct *libsmtp_int_part)
+{
+  /* Is this a custom type ? */
+  if (libsmtp_int_part->Type != LIBSMTP_MIME_CUSTOM)
+    return LIBSMTP_BADMIME;
+    
+  g_string_assign (libsmtp_int_part->CustomType, libsmtp_int_custom_type);
+}
 
-  int libsmtp_mime_subtype_custom (char *, struct libsmtp_part_struct *,\
-        struct libsmtp_session_struct *); */
+int libsmtp_mime_subtype_custom (char *libsmtp_int_custom_subtype, \
+       struct libsmtp_part_struct *libsmtp_int_part)
+{
+  /* Is this a custom subtype ? */
+  if (libsmtp_int_part->Subtype != LIBSMTP_MIME_SUB_CUSTOM)
+    return LIBSMTP_BADMIME;
+    
+  g_string_assign (libsmtp_int_part->CustomSubtype, libsmtp_int_custom_subtype);
+}
 
 
 /* We use this function internally to set the session to the next part to

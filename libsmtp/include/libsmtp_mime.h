@@ -154,11 +154,9 @@
         (struct libsmtp_part_struct *, int, int, int, int, char *,\
         struct libsmtp_session_struct *libsmtp_session);
         
-  int libsmtp_mime_type_custom (char *, struct libsmtp_part_struct *,\
-        struct libsmtp_session_struct *);
+  int libsmtp_mime_type_custom (char *, struct libsmtp_part_struct *);
 
-  int libsmtp_mime_subtype_custom (char *, struct libsmtp_part_struct *,\
-        struct libsmtp_session_struct *);
+  int libsmtp_mime_subtype_custom (char *, struct libsmtp_part_struct *);
   
   struct libsmtp_part_struct *libsmtp_part_query (struct libsmtp_session_struct *);
   
