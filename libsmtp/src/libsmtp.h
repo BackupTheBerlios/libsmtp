@@ -41,13 +41,13 @@ struct libsmtp_session_struct {
   GList *To;		/* All recipients addresses */
   GList *CC;		/* All Carbon Copy recipients addresses */
   GList *BCC;		/* All Blind Carbon Copy recipients addresses */
-  int numfailedTo;	/* number of rejected recipients */
-  int numfailedCC;	/* number of rejected CC recipients */
-  int numfailedBCC;	/* number of rejected BCC recipients */
-  GList *failedTo;	/* List of failed recipients containing the response for
+  int NumFailedTo;	/* number of rejected recipients */
+  int NumFailedCC;	/* number of rejected CC recipients */
+  int NumFailedBCC;	/* number of rejected BCC recipients */
+  GList *FailedTo;	/* List of failed recipients containing the response for
   			   each failure */
-  GList *failedCC;	/* The same for CC recipients */
-  GList *failedBCC;	/* And for BCC recipients */
+  GList *FailedCC;	/* The same for CC recipients */
+  GList *FailedBCC;	/* And for BCC recipients */
 
   GString *Subject;	/* Mail subject */
   GString *LastResponse;	/* Last SMTP response string from server */
@@ -60,6 +60,8 @@ struct libsmtp_session_struct {
   int HeaderBytes;	/* Bytes of header data sent */
   int BodyBytes;	/* Bytes of body data sent */
 };
+
+struct libsmtp_session_struct *libsmtp_session_initialize (void);
 
 int libsmtp_connect (char *, unsigned int, unsigned int, struct libsmtp_session_struct *);
 

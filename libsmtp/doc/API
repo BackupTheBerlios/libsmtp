@@ -1,16 +1,21 @@
 
-*libsmtp_session_struct libsmtp_connect (char *server, unsigned int port,
-           unsigned int flags)
+struct libsmtp_session_struct *libsmtp_session_initialize ()
+
+Use this function if to initialize the session structure. This will malloc
+memory and initialize the structure's GStrings and GLists. Please be sure to
+clean the initialized struct up with libsmtp_free after you finish using it.
+
+
+int libsmtp_connect (char *server, unsigned int port,
+           unsigned int flags, struct libsmtp_session_struct *data)
 
 Use this function to connect to a mailserver. The string server can either
 be a hostname or an IP address. Port can be left at 0, then the default
-SMTP port (25) can be used. Flags should be left at 0 at the moment. You
-should check the returned struct for error state. An atexit function will be
-registered to free the memory held be structure, but you should clean up
-anyway with libsmtp_free. This function fills in the server_flags struct
+SMTP port (25) can be used. Flags should be left at 0 at the moment. The
+libsmtp_session_struct should be initialized beforehand. Please be sure
+to clean up with libsmtp_free. This function fills in the ServerFlags struct
 entry so you can see what the other side is capable of.
-Returns: A pointer to an libsmtp_session_struct with data filled in. You
-should check this with libsmtp_error.
+Returns: A libsmtp_errno error code or 0 for success.
  
 
 int libsmtp_errno (struct libsmtp_session_struct *data)
@@ -31,7 +36,7 @@ int libsmtp_add_recipient (int recipient_type, char *address, struct
 This function will add the address to the recipient of this session.
 recipient_type may be one of LIBSMTP_REC_TO, LIBSMTP_REC_CC,
 LIBSMTP_REC_BCC. This will be added to the linked list internally.
-Returns: 0 for success, otherwise see libsmtp_error.
+Returns: 0 for success, otherwise see libsmtp_errno.
 
 
 int libsmtp_set_environment (char *from, char *subject, unsigned int flags,
@@ -89,7 +94,7 @@ see in the libsmtp_mail_data function the stats of sent mail.
 int libsmtp_free (struct libsmtp_session_struct *data)
 
 Use this to free the session structure. You should do this to clean up
-memory usage. 
+memory usage. Maybe it is best to register this with atexit somehow.
 
 
 struct libsmtp_session_struct {
