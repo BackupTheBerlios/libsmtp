@@ -1,5 +1,5 @@
 
-#ifdef LIBSMTP_USE_MIME
+/* #ifdef LIBSMTP_USE_MIME */
 
   #ifndef __G_LIB_H__
     #include <glib.h>
@@ -22,6 +22,7 @@
 
     #define LIBSMTP_MAX_MIME	7
     
+
     /* MIME subtypes */
 
     /* 0 to 999 are TEXT subtypes */
@@ -33,12 +34,14 @@
     
     #define LIBSMTP_MAX_MIME_SUB0	3
 
+
     /* 1000 to 1999 are MESSAGE subtypes */
 
     #define LIBSMTP_MIME_SUB_RFC822	1000
     #define LIBSMTP_MIME_SUB_PARTIAL	1001
 
     #define LIBSMTP_MAX_MIME_SUB1	1001
+
 
     /* 2000 to 2999 are IMAGE subtypes */
 
@@ -56,23 +59,26 @@
 
     #define LIBSMTP_MAX_MIME_SUB2	2010
 
+
     /* 3000 to 3999 are AUDIO subtypes */
 
-    #define LIBSMTP_MIME_SUB_MPEGVID	3000
+    #define LIBSMTP_MIME_SUB_MPEGAUD	3000
     #define LIBSMTP_MIME_SUB_MIDI	3001
     #define LIBSMTP_MIME_SUB_WAV	3002
     #define LIBSMTP_MIME_SUB_AIFF	3003
 
     #define LIBSMTP_MAX_MIME_SUB3	3003
 
+
     /* 4000 to 4999 are VIDEO subtypes */
 
-    #define LIBSMTP_MIME_SUB_MPEGAUD	4000
+    #define LIBSMTP_MIME_SUB_MPEGVID	4000
     #define LIBSMTP_MIME_SUB_MSVIDEO	4001
     #define LIBSMTP_MIME_SUB_QUICKTIME	4002
     #define LIBSMTP_MIME_SUB_FLI	4003
 
     #define LIBSMTP_MAX_MIME_SUB4	4003
+
 
     /* 5000 to 5999 are APPLICATION subtypes */
 
@@ -89,6 +95,7 @@
 
     #define LIBSMTP_MAX_MIME_SUB5	5008
 
+
     /* 6000 to 6999 are MULTIPART subtypes */
 
     #define LIBSMTP_MIME_SUB_MIXED	6000
@@ -97,6 +104,7 @@
     #define LIBSMTP_MIME_SUB_ALTERNATIVE	6003
 
     #define LIBSMTP_MAX_MIME_SUB6	6003
+
 
     /* 30000 (for signed ints!!) is the CUSTOM subtype */
 
@@ -112,17 +120,31 @@
     #define LIBSMTP_ENC_QUOTED	4 /* not really used in current version */
 
     #define LIBSMTP_MAX_ENC	4
+    
+
+    /* Charset values */
+    
+    #define LIBSMTP_CHARSET_USASCII	0
+    #define LIBSMTP_CHARSET_ISO8859_1	1
+    #define LIBSMTP_CHARSET_ISO8859_2	2
+    #define LIBSMTP_CHARSET_ISO8859_3	3
+    
+    /* Need to define more here ... */
+    
+    #define LIBSMTP_MAX_CHARSET		3
+
 
   #endif /* LIB_SMTP_MIME_H */
   
   struct libsmtp_part_struct {
     int internal_id;	/* internal id number */
-    int type;	/* MIME type */
-    GString *custom_type;	/* optional custom MIME type */
-    int subtype;	/* MIME subtype */
-    GString *custom_subtype;	/* optional custom MIME subtype */
-    int encoding;	/* MIME transfer encoding */
-    GString *description;	/* MIME part description */
+    int Type;	/* MIME type */
+    GString *CustomType;	/* optional custom MIME type */
+    int Subtype;	/* MIME subtype */
+    GString *CustomSubtype;	/* optional custom MIME subtype */
+    int Encoding;	/* MIME transfer encoding */
+    int Charset;	/* optional charset for text MIME types */
+    GString *Description;	/* MIME part description */
   };
 
   struct libsmtp_part_struct *libsmtp_part_new \
@@ -145,4 +167,5 @@
   #define LIBSMTP_NOPARENT	2051	/* There is no parent */
   #define LIBSMTP_PART_EXISTS	2052	/* This part exists already */
   #define LIBSMTP_PARTSERR	2053	/* Generic parts error */
-#endif /* LIBSMTP_USE_MIME */
+  #define LIBSMTP_PARTSFINISHED	2054	/* All parts finished */
+/* #endif LIBSMTP_USE_MIME */

@@ -510,6 +510,50 @@ int libsmtp_headers (struct libsmtp_session_struct *libsmtp_session)
       return LIBSMTP_ERRORSENDFATAL;
   }
   
+  /* If we use the MIME functionality, we need to send some stuff */
+
+  #ifdef LIBSMTP_USE_MIME
+
+    /* If we use the MIME stuff we tell them this, too */
+    g_string_assign (libsmtp_temp_gstring, "Mime-Version: 1.0\r\n");
+  
+    if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 1))
+      return LIBSMTP_ERRORSENDFATAL;
+    
+    /* If there are no parts defined by now, we assume its
+       text/plain MIME type and US-ASCII charset */
+
+    if (!libsmtp_session->Parts)
+    {
+      g_string_assign (libsmtp_temp_gstring, "Content-Type: text/plain; charset=\"us-ascii\r\n\"");
+  
+      if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 1))
+        return LIBSMTP_ERRORSENDFATAL;
+    }
+    else
+    {
+      /* We should check for valied MIME settings first */
+      if ((libsmtp_temp=libsmtp_int_check_part (libsmtp_session->PartNow)))
+      {
+        libsmtp_session->ErrorCode=libsmtp_temp;
+        return libsmtp_temp;
+      }
+
+      /* Then we look up the names of the MIME settings of the main body part 
+         and send them as headers */
+
+      g_string_sprintf (libsmtp_temp_gstring, "Content-Type: %s/%s; charset=\"%s\"\nContent-Transfer-Encoding: %s", \
+         libsmtp_int_lookup_mime_type (libsmtp_session->PartNow), \
+         libsmtp_int_lookup_mime_subtype (libsmtp_session->PartNow), \
+         libsmtp_int_lookup_mime_charset (libsmtp_session->PartNow), \
+         libsmtp_int_lookup_mime_encoding (libsmtp_session->PartNow));
+    
+      if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 1))
+        return LIBSMTP_ERRORSENDFATAL;
+    }
+    
+  #endif
+  
   /* Now let there be a blank line */
   g_string_assign (libsmtp_temp_gstring, "\n");
   
@@ -581,6 +625,7 @@ int libsmtp_header_send (char *libsmtp_header_string, \
 int libsmtp_body_send_raw (char *libsmtp_body_data, \
             struct libsmtp_session_struct *libsmtp_session)
 {
+  GString *libsmtp_temp_gstring;
 
   /* Headers should have been sent before body data goes out, but we
      must still be in the body stage at most */

@@ -1,5 +1,5 @@
 
-all:	libsmtp.a testapp
+all:	libsmtp.a testapp mimetest
 
 libsmtp.a:	libsmtp_connection.o libsmtp_error.o libsmtp_data.o libsmtp_comm.o libsmtp_mime.o
 	ar -r libsmtp.a libsmtp_connection.o libsmtp_error.o libsmtp_data.o libsmtp_comm.o libsmtp_mime.o
@@ -27,6 +27,9 @@ testapp.o:	testapp.c libsmtp.h
 
 testapp:	testapp.o libsmtp.a
 	gcc -o testapp -g -L. testapp.o -lsmtp `glib-config --libs` -lglib
+
+mimetest:	mimetest.c libsmtp.a
+	gcc mimetest.c -o mimetest -L. -lsmtp `glib-config --cflags` `glib-config --libs`
 
 clean:
 	rm testapp *.o *.a
