@@ -46,7 +46,7 @@
     #define LIBSMTP_MIME_SUB_JPG	2001
     #define LIBSMTP_MIME_SUB_PNG	2002
     #define LIBSMTP_MIME_SUB_TIFF	2003
-    #define LIBSMTP_MIME_SUB_MS-BMP	2004
+    #define LIBSMTP_MIME_SUB_MS_BMP	2004
     #define LIBSMTP_MIME_SUB_XBITMAP	2005
     #define LIBSMTP_MIME_SUB_XPIXMAP	2006
     #define LIBSMTP_MIME_SUB_PORTABLE_ANYMAP	2007
@@ -58,7 +58,7 @@
 
     /* 3000 to 3999 are AUDIO subtypes */
 
-    #define LIBSMTP_MIME_SUB_MPEG	3000
+    #define LIBSMTP_MIME_SUB_MPEGVID	3000
     #define LIBSMTP_MIME_SUB_MIDI	3001
     #define LIBSMTP_MIME_SUB_WAV	3002
     #define LIBSMTP_MIME_SUB_AIFF	3003
@@ -67,7 +67,7 @@
 
     /* 4000 to 4999 are VIDEO subtypes */
 
-    #define LIBSMTP_MIME_SUB_MPEG	4000
+    #define LIBSMTP_MIME_SUB_MPEGAUD	4000
     #define LIBSMTP_MIME_SUB_MSVIDEO	4001
     #define LIBSMTP_MIME_SUB_QUICKTIME	4002
     #define LIBSMTP_MIME_SUB_FLI	4003
@@ -115,7 +115,18 @@
 
   #endif /* LIB_SMTP_MIME_H */
   
-  int libsmtp_mime_new (struct libsmtp_part_struct *, int, int, int,\
+  struct libsmtp_part_struct {
+    int internal_id;	/* internal id number */
+    int type;	/* MIME type */
+    GString *custom_type;	/* optional custom MIME type */
+    int subtype;	/* MIME subtype */
+    GString *custom_subtype;	/* optional custom MIME subtype */
+    int encoding;	/* MIME transfer encoding */
+    GString *description;	/* MIME part description */
+  };
+
+  struct libsmtp_part_struct *libsmtp_part_new \
+        (struct libsmtp_part_struct *, int, int, int, char *,\
         struct libsmtp_session_struct *libsmtp_session);
         
   int libsmtp_mime_type_custom (char *, struct libsmtp_part_struct *,\
@@ -127,14 +138,11 @@
   int libsmtp_mime_content_desc (char *, struct libsmtp_part_struct *,\
         struct libsmtp_session_struct *);
   
-  struct libsmtp_part_struct {
-    int internal_id;	/* internal id number */
-    int type;	/* MIME type */
-    GString *custom_type;	/* optional custom MIME type */
-    int subtype;	/* MIME subtype */
-    GString *custom_subtype;	/* optional custom MIME subtype */
-    int encoding;	/* MIME transfer encoding */
-    GString *description;	/* MIME part description */
-  }
-
+  /* MIME related error codes >= 2048 */
+  #define LIBSMTP_BADMIME	2048	/* You gave a bad type/subtype combo */
+  #define LIBSMTP_NOMULTIPART	2049	/* Parent is not multipart */
+  #define LIBSMTP_BADENCODING	2050	/* You gave a bad MIME/encoding combo */
+  #define LIBSMTP_NOPARENT	2051	/* There is no parent */
+  #define LIBSMTP_PART_EXISTS	2052	/* This part exists already */
+  #define LIBSMTP_PARTSERR	2053	/* Generic parts error */
 #endif /* LIBSMTP_USE_MIME */

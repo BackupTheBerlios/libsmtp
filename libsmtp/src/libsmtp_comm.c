@@ -582,13 +582,25 @@ int libsmtp_body_send_raw (char *libsmtp_body_data, \
             struct libsmtp_session_struct *libsmtp_session)
 {
 
-  /* Headers should have been sent before body data goes out */
-  if (libsmtp_session->Stage < LIBSMTP_HEADERS_STAGE)
+  /* Headers should have been sent before body data goes out, but we
+     must still be in the body stage at most */
+  if ((libsmtp_session->Stage < LIBSMTP_HEADERS_STAGE) ||
+      (libsmtp_session->Stage > LIBSMTP_BODY_STAGE))
   {
     libsmtp_session->ErrorCode = LIBSMTP_BADSTAGE;
     return LIBSMTP_BADSTAGE;
   }
   
+  /* If we just came from the headers stage, we have to send a blank line
+     first */
+  
+  /* Headers should have been sent before body data goes out */
+  if (libsmtp_session->Stage = LIBSMTP_HEADERS_STAGE)
+  {
+    /* Now let there be a blank line */
+    g_string_assign (libsmtp_temp_gstring, "\n");
+  }
+
   /* We now enter the body stage */
   libsmtp_session->Stage = LIBSMTP_BODY_STAGE;
 
@@ -597,6 +609,7 @@ int libsmtp_body_send_raw (char *libsmtp_body_data, \
   
   return LIBSMTP_NOERR;
 }
+
 
 
 /* This function ends the body part. It can only be used in certain stages */

@@ -54,71 +54,64 @@ configure the session with the MIME functions.
 
 It is now possible to send MIME documents with libsmtp, i. e. non
 US-ASCII mails or binary attachments. Mail MIME types typically are either
-text/plain, text/html or multipart/*, in my experience. I never got a mail
+text/plain, text/html or multipart/* (with additional text, image or
+whatever parts attached), in my experience. I never got a mail
 just consisting of a picture and nothing else :). It is support in libsmtp
 however anyway.
 
-
 Before you enter the header stage, you have to set the MIME type of the
-message with the following function:
+message. A mail message sent by libsmtp consists of different body "parts".
+Even if your message just contains one block of text, it is a part, if a
+simple one. To create a part, use this function:
 
-int libsmtp_body_type (int type, struct libsmtp_session_struct *data)
+  int libsmtp_mime_new (struct libsmtp_part_struct *newpart, \
+       struct libsmtp_part_struct *parentpart, int type, int subtype, \
+       int encoding, char *description, struct libsmtp_session_struct *session);
 
-where type can be one of:
+The function fills in the newpart struct with all data you supply it. If this
+is the first part, parentpart should be 0, otherwise the part ID of the parent
+part. If you just have one part, you can leave this 0 of course. More on
+multiple parts in the MIME file in the doc directory. Type can be one of:
 
 LIBSMTP_MIME_TEXT, LIBSMTP_MIME_MESSAGE, LIBSMTP_MIME_IMAGE,
 LIBSMTP_MIME_AUDIO, LIBSMTP_MIME_VIDEO, LIBSMTP_MIME_APPLICATION,
 LIBSMTP_MIME_MULTIPART or LIBSMTP_MIME_CUSTOM
-
-
-When you specify custom, you have to set the MIME type with:
-
-int libsmtp_body_type_custom (char *, struct libsmtp_session_struct *)
-
-
-The subtype can be set with:
-
-libsmtp_body_subtype (int subtype, struct libsmtp_session_struct *data)
 
 The following subtypes are predefined (all are prefixed with
 LIBSMTP_MIME_SUB_):
 
 TEXT SUBTYPES: PLAIN, HTML, ENGLISH, RICHTEXT
 MESSAGE SUBTYPES: RFC822, PARTIAL
-IMAGE SUBTYPES: GIF, JPG, PNG, TIFF, MS-BMP, XBITMAP, XPIXMAP,
+IMAGE SUBTYPES: GIF, JPG, PNG, TIFF, MS_BMP, XBITMAP, XPIXMAP,
     PORTABLE_ANYMAP, PORTABLE_BITMAP, PORTABLE_GRAYMAP, PORTABLE_PIXMAP
-AUDIO SUBTYPES: MPEG, MIDI, WAV, AIFF
-VIDEO SUBTYPES: MPEG, MSVIDEO, QUICKTIME, FLI
+AUDIO SUBTYPES: MPEGVID, MIDI, WAV, AIFF
+VIDEO SUBTYPES: MPEGAUD, MSVIDEO, QUICKTIME, FLI
 APPLICATION SUBTYPES: RTF, POSTSCRIPT, PDF, ZIP, DEBIAN-PACKAGE, EXECUTABLE,
     GTAR, SHELLSCRIPT, TAR, OCTET_STREAM
 MULTIPART SUBTYPES: MIXED, PARALLEL, DIGEST, ALTERNATIVE
-
 OTHER: CUSTOM (which can be used with any type)
-
-
-Yeah, you have already guessed it:
-libsmtp_body_subtype_custom (char *name, struct libsmtp_session_struct *data)
-
 
 If you use a non-text, non-message, non-multipart body type, you must set a
 content-encoding that encodes 8BIT data into 7BIT. At the moment there is
 only one : LIBSMTP_ENC_BASE64. Multipart bodies always have to use
-LIBSMTP_ENC_7BIT. All other body types can choose between
+LIBSMTP_ENC_7BIT. Message and text body types can choose between
 LIBSMTP_ENC_7BIT and LIBSMTP_ENC_BASE64. If you are sure your text doesn't
 contain non-7bit characters, you can use LIBSMTP_ENC_7BIT. Otherwise you
 should choose LIBSMTP_ENC_BASE64, which will encode your text in base64. I
-will try to add quoted-printable encoding in the near future. 
+will try to add quoted-printable encoding in the near future, which actually
+is quite necessary for 8bit text encodings :)
 
-int libsmtp_body_enc_type (int enctype, struct libsmtp_session_struct *data)
+The description is a text string in the US-ASCII charset (for now) which
+describes the part. Is this is optional, you can set it to NULL if you don't
+want to describe this part (like the main part for example).
 
 
-Use
+When you specify custom MIME type, you have to set the MIME type with:
 
-int libsmtp_body_content_desc (char *desc, struct libsmtp_session_struct
-              *data)
+int libsmtp_body_type_custom (char *, struct libsmtp_session_struct *)
 
-if your main MIME type is non-textual and you want to describe it. Use the
-US-ASCII charset to describe it for now!! I guess this will be seldom needed :)
+and the subtype with:
+libsmtp_body_subtype_custom (char *name, struct libsmtp_session_struct *data)
 
 
 

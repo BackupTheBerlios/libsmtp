@@ -104,7 +104,7 @@ int main(void)
   }
 
   /* This sends a line of message body */
-  if (libsmtp_body_send ("Bla!!", mailsession))
+  if (libsmtp_body_send_raw ("Bla!!", mailsession))
   {
     printf ("An error occured while sending the body:\n%s\nLast Response:%s\n", \
       libsmtp_strerr (mailsession), mailsession->LastResponse->str);

@@ -1,11 +1,15 @@
 
+#ifndef LIB_SMTP_H
+
+#define LIB_SMTP_H
+
 #ifndef __G_LIB_H__
   #include <glib.h>
 #endif
 
-#ifndef LIB_SMTP_H
-
-#define LIB_SMTP_H
+#ifdef LIBSMTP_USE_MIME
+  #include "libsmtp_mime.h"
+#endif
 
 /* These flags show what the server can do */
 
@@ -72,6 +76,8 @@
 #define LIBSMTP_BADSTAGE	1028
 #define LIBSMTP_REJECTQUIT	1029
 
+/* Codes > 2048 are MIME errors and are defined in libsmtp_mime.h */
+
 #define LIBSMTP_UNDEFERR	10000 /* ErrorCode was undefined!! */
 /* This structure defines one libsmtp session */
 
@@ -104,8 +110,10 @@ struct libsmtp_session_struct {
   unsigned int HeaderBytes;	/* Bytes of header data sent */
   unsigned long int BodyBytes;	/* Bytes of body data sent */
   
-  int mainpart_id;	/* ID of part describing main MIME type */
-  void *mainpart_ptr;	/* Pointer to main part */
+  #ifdef LIBSMTP_USE_MIME
+    GNode *Parts;		/* N-Tree of body parts (MIME stuff) */
+    struct libsmtp_part_struct *PartNow;	/* Part we are sending now */
+  #endif
 };
 
 struct libsmtp_session_struct *libsmtp_session_initialize (void);

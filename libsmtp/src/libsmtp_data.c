@@ -46,6 +46,10 @@ struct libsmtp_session_struct *libsmtp_session_initialize (void)
   libsmtp_session->From = g_string_new (NULL);
   libsmtp_session->Subject = g_string_new (NULL);
   libsmtp_session->LastResponse = g_string_new (NULL);
+
+  #ifdef LIBSMTP_USE_MIME
+    libsmtp_session->Parts = g_node_new (NULL);
+  #endif
   
   return libsmtp_session;
 }

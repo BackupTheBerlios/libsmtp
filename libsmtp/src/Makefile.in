@@ -1,8 +1,8 @@
 
 all:	libsmtp.a testapp
 
-libsmtp.a:	libsmtp_connection.o libsmtp_error.o libsmtp_data.o libsmtp_comm.o
-	ar -r libsmtp.a libsmtp_connection.o libsmtp_error.o libsmtp_data.o libsmtp_comm.o
+libsmtp.a:	libsmtp_connection.o libsmtp_error.o libsmtp_data.o libsmtp_comm.o libsmtp_mime.o
+	ar -r libsmtp.a libsmtp_connection.o libsmtp_error.o libsmtp_data.o libsmtp_comm.o libsmtp_mime.o
 
 libsmtp.o:	libsmtp.c libsmtp.h
 	gcc `glib-config --cflags` -c -g -o libsmtp.o libsmtp.c
@@ -12,6 +12,9 @@ libsmtp_connection.o:	libsmtp_connection.c libsmtp.h
 
 libsmtp_comm.o:	libsmtp_comm.c libsmtp.h
 	gcc `glib-config --cflags` -c -g -o libsmtp_comm.o libsmtp_comm.c
+
+libsmtp_mime.o:	libsmtp_mime.c libsmtp_mime.h
+	gcc `glib-config --cflags` -DLIBSMTP_USE_MIME -c -g -o libsmtp_mime.o libsmtp_mime.c
 
 libsmtp_error.o:	libsmtp_error.c libsmtp.h
 	gcc `glib-config --cflags` -c -g -o libsmtp_error.o libsmtp_error.c
