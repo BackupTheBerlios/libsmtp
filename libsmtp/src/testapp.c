@@ -51,15 +51,15 @@ int main(void)
   mailsession = libsmtp_session_initialize();
 
   /* Set session environment (from address, subject) */
-  libsmtp_set_environment ("kread@newnet-marketing.de","Test", 0, mailsession);
+  libsmtp_set_environment ("libsmtp-test@hotmail.com","libsmtp Test", 0, mailsession);
   
   /* Now we add some recipients */
-  libsmtp_add_recipient (LIBSMTP_REC_TO, "kread@newnet-marketing.de", mailsession);
-  libsmtp_add_recipient (LIBSMTP_REC_TO, "kread@mconsole.com", mailsession);
-  libsmtp_add_recipient (LIBSMTP_REC_CC, "obsidian@unverbraucht.de", mailsession);
-  libsmtp_add_recipient (LIBSMTP_REC_CC, "obsidian@obsidian.de", mailsession);
-  libsmtp_add_recipient (LIBSMTP_REC_BCC, "obsidian@panokratie.de", mailsession);
-  libsmtp_add_recipient (LIBSMTP_REC_BCC, "obsidian@gmx.net", mailsession);
+  libsmtp_add_recipient (LIBSMTP_REC_TO, "obsidian@berlios.de", mailsession);
+  libsmtp_add_recipient (LIBSMTP_REC_TO, "libsmtp-test@obsidian.de", mailsession);
+  libsmtp_add_recipient (LIBSMTP_REC_CC, "libsmtp-test@hotmail.com", mailsession);
+  libsmtp_add_recipient (LIBSMTP_REC_CC, "steve.balmer@microsoft.com", mailsession);
+  libsmtp_add_recipient (LIBSMTP_REC_BCC, "we_love_you@backstreetboys.com", mailsession);
+  libsmtp_add_recipient (LIBSMTP_REC_BCC, "i_love_you_too@backsideboys.com", mailsession);
 
   /* This starts the SMTP connection */
   if (libsmtp_connect ("mail.obsidian.de",0,0,mailsession))
