@@ -1,0 +1,38 @@
+# Generated automatically from Makefile.in by configure.
+
+FLAGS=-DLIBSMTP_USE_MIME -g -I../include
+
+# You might want to see debug stuff
+# FLAGS=-DLIBSMTP_USE_MIME -g -I../include -DLIBSMTP_DEBUG -DLIBSMTP_QUOTED_DEBUG
+
+all:	libsmtp_mime.a mimetest multiparttest
+
+libsmtp_mime.a:	parts.o comm.o base64.o quoted.o
+	ar -r libsmtp_mime.a parts.o comm.o base64.o quoted.o
+
+parts.o:	parts.c
+	gcc `glib-config --cflags` $(FLAGS) -c -o parts.o parts.c
+
+comm.o:	comm.c
+	gcc `glib-config --cflags` $(FLAGS) -c -o comm.o comm.c
+
+base64.o:	base64.c
+	gcc `glib-config --cflags` $(FLAGS) -c -o base64.o base64.c
+
+quoted.o:	quoted.c
+	gcc `glib-config --cflags` $(FLAGS) -c -o quoted.o quoted.c
+
+mimetest.o:	mimetest.c libsmtp_mime.a
+	gcc $(FLAGS) -c mimetest.c -o mimetest.o `glib-config --cflags`
+
+mimetest:	mimetest.o ../smtp/libsmtp.a libsmtp_mime.a
+	gcc $(FLAGS) -o mimetest -L. -L../smtp mimetest.o -lsmtp -lsmtp_mime `glib-config --libs` -lglib
+
+multiparttest.o:	multiparttest.c libsmtp_mime.a
+	gcc $(FLAGS) -c multiparttest.c -o multiparttest.o `glib-config --cflags`
+
+multiparttest:	multiparttest.o ../smtp/libsmtp.a libsmtp_mime.a
+	gcc $(FLAGS) -o multiparttest -L. -L../smtp multiparttest.o -lsmtp -lsmtp_mime `glib-config --libs` -lglib
+
+clean:
+	rm *.o *.a mimetest multiparttest
