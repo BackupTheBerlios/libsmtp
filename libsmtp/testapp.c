@@ -31,10 +31,10 @@ int main(void)
 {
 
   struct libsmtp_session_struct *mailsession;
-  mailsession = libsmtp_connect ("localhost",0,0);
-  
-  if (!mailsession)
+  mailsession = calloc (1, sizeof (struct libsmtp_session_struct));
+  if (libsmtp_connect ("container",0,0,mailsession))
     printf ("Ha!\n");
   
+  free (mailsession);
   return 0;
 }

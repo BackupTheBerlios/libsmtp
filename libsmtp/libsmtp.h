@@ -8,23 +8,31 @@
 #define LIBSMTP_HAS_TLS	1
 #define LIBSMTP_HAS_8BIT	2
 #define LIBSMTP_HAS_AUTH	4
-#define LIBSMTP_HAS_PIPELINIG	8
+#define LIBSMTP_HAS_PIPELINING	8
 #define LIBSMTP_HAS_SIZE	16
 #define LIBSMTP_HAS_DSN		32
+#define LIBSMTP_HAS_ETRN	64
+#define LIBSMTP_HAS_ENHANCEDSTATUSCODES	128
 
 /* These are the error definitions */
 
 /* Error codes below 1024 are fatal errors - the socket will be closed */
+#define LIBSMTP_NOERR		0
 #define LIBSMTP_SOCKETNOCREATE	1
 #define LIBSMTP_HOSTNOTFOUND	2
 #define LIBSMTP_CONNECTERR	3
 #define LIBSMTP_ERRORREADFATAL	4
 #define LIBSMTP_NOTWELCOME	5
+#define LIBSMTP_WHATSMYHOSTNAME	6
+#define LIBSMTP_ERRORSENDFATAL	7
 
+/* Codes >= 1024 are errors that are not fatal to the whole SMTP session */
+#define LIBSMTP_ERRORREAD	1024
+#define LIBSMTP_ERRORSEND	1025
 /* This structure defines one libsmtp session */
 
 struct libsmtp_session_struct {
-  int connection;	/* internal connection number */
+  int serverflags;	/* Server capability flags */
   int socket;		/* socket handle */
 
   GString *From;	/* From address */
@@ -45,13 +53,13 @@ struct libsmtp_session_struct {
   int ErrorCode;	/* Internal libsmtp error code from last error */
 
   int DialogueSent;	/* Number of SMTP dialogue lines sent */
-  int DialogueBytesSent;	/* Bytes of SMTP dialogue data sent */
+  int DialogueBytes;	/* Bytes of SMTP dialogue data sent */
   int HeadersSent;  	/* Number of header lines sent */
-  int HeadersBytesSent;	/* Bytes of header data sent */
-  int BodyBytesSent;	/* Bytes of body data sent */
+  int HeaderBytes;	/* Bytes of header data sent */
+  int BodyBytes;	/* Bytes of body data sent */
 };
 
-struct libsmtp_session_struct *libsmtp_connect (char *, unsigned int, unsigned int);
+int libsmtp_connect (char *, unsigned int, unsigned int, struct libsmtp_session_struct *);
 
 int libsmtp_errno(struct libsmtp_session_struct *);
 
