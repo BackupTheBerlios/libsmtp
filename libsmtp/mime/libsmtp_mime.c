@@ -141,147 +141,16 @@ struct libsmtp_part_struct *libsmtp_part_new \
   libsmtp_int_part->CustomSubtype = g_string_new (NULL);
   libsmtp_int_part->Description = g_string_new (NULL);
   
-  /* Now we check if any invalid MIME arguments have been given.*/
-  
-  if ((libsmtp_int_type < 0) || (libsmtp_int_type > LIBSMTP_MAX_MIME))
+  libsmtp_int_part->Type = libsmtp_int_type;
+  libsmtp_int_part->Subtype=libsmtp_int_subtype;
+  libsmtp_int_part->Encoding=libsmtp_int_encoding;
+  libsmtp_int_part->Description=g_string_new (libsmtp_int_desc);
+
+  if (libsmtp_int_check_part (libsmtp_int_part))
   {
     libsmtp_session->ErrorCode = LIBSMTP_BADARGS;
     return NULL;
   }
-
-  libsmtp_int_part->Type = libsmtp_int_type;
-  
-  /* Now the same for the subtype argument. This must correspond to the
-     selected type */
-
-  switch (libsmtp_int_part->Type)
-  {
-    case (LIBSMTP_MIME_TEXT):
-      if ((libsmtp_int_subtype < 0) || (libsmtp_int_subtype > LIBSMTP_MAX_MIME_SUB0))
-      {
-        libsmtp_session->ErrorCode = LIBSMTP_BADMIME;
-        return NULL;
-      }
-      /* Text types can have any encoding */
-      if ((libsmtp_int_encoding < 0) || (libsmtp_int_encoding > LIBSMTP_MAX_ENC))
-      {
-        libsmtp_session->ErrorCode = LIBSMTP_BADENCODING;
-        return NULL;
-      }
-
-    break;
-
-    case (LIBSMTP_MIME_MESSAGE):
-      if ((libsmtp_int_subtype < 1000) || (libsmtp_int_subtype > LIBSMTP_MAX_MIME_SUB1))
-      {
-        libsmtp_session->ErrorCode = LIBSMTP_BADMIME;
-        return NULL;
-      }
-
-      /* Message types can have any encoding */
-      if ((libsmtp_int_encoding < 0) || (libsmtp_int_encoding > LIBSMTP_MAX_ENC))
-      {
-        libsmtp_session->ErrorCode = LIBSMTP_BADENCODING;
-        return NULL;
-      }
-    break;
-
-    case (LIBSMTP_MIME_IMAGE):
-      if ((libsmtp_int_subtype < 2000) || (libsmtp_int_subtype > LIBSMTP_MAX_MIME_SUB2))
-      {
-        libsmtp_session->ErrorCode = LIBSMTP_BADMIME;
-        return NULL;
-      }
-
-      /* Image types must be in a non-text encoding */
-      if ((libsmtp_int_encoding < LIBSMTP_ENC_BINARY) || (libsmtp_int_encoding > LIBSMTP_MAX_ENC))
-      {
-        libsmtp_session->ErrorCode = LIBSMTP_BADENCODING;
-        return NULL;
-      }
-    break;                         
-
-    case (LIBSMTP_MIME_AUDIO):
-      if ((libsmtp_int_subtype < 3000) || (libsmtp_int_subtype > LIBSMTP_MAX_MIME_SUB3))
-      {
-        libsmtp_session->ErrorCode = LIBSMTP_BADMIME;
-        return NULL;
-      }
-
-      /* Audio types must be in a non-text encoding */
-      if ((libsmtp_int_encoding < LIBSMTP_ENC_BINARY) || (libsmtp_int_encoding > LIBSMTP_MAX_ENC))
-      {
-        libsmtp_session->ErrorCode = LIBSMTP_BADENCODING;
-        return NULL;
-      }
-    break;
-
-    case (LIBSMTP_MIME_VIDEO):
-      if ((libsmtp_int_subtype < 4000) || (libsmtp_int_subtype > LIBSMTP_MAX_MIME_SUB4))
-      {
-        libsmtp_session->ErrorCode = LIBSMTP_BADMIME;
-        return NULL;
-      }
-
-      /* Video types must be in a non-text encoding */
-      if ((libsmtp_int_encoding < LIBSMTP_ENC_BINARY) || (libsmtp_int_encoding > LIBSMTP_MAX_ENC))
-      {
-        libsmtp_session->ErrorCode = LIBSMTP_BADENCODING;
-        return NULL;
-      }
-    break;
-
-    case (LIBSMTP_MIME_APPLICATION):
-      if ((libsmtp_int_subtype < 5000) || (libsmtp_int_subtype > LIBSMTP_MAX_MIME_SUB5))
-      {
-        libsmtp_session->ErrorCode = LIBSMTP_BADMIME;
-        return NULL;
-      }
-
-      /* Application types must be in a non-text encoding */
-      if ((libsmtp_int_encoding < LIBSMTP_ENC_BINARY) || (libsmtp_int_encoding > LIBSMTP_MAX_ENC))
-      {
-        libsmtp_session->ErrorCode = LIBSMTP_BADENCODING;
-        return NULL;
-      }
-    break;
-
-    case (LIBSMTP_MIME_MULTIPART):
-      if ((libsmtp_int_subtype < 6000) || (libsmtp_int_subtype > LIBSMTP_MAX_MIME_SUB6))
-      {
-        libsmtp_session->ErrorCode = LIBSMTP_BADMIME;
-        return NULL;
-      }
-
-      /* Application types must be in a text encoding, and should only be
-         7bit */
-      if (libsmtp_int_encoding != LIBSMTP_ENC_7BIT)
-      {
-        libsmtp_session->ErrorCode = LIBSMTP_BADENCODING;
-        return NULL;
-      }
-    break;
-
-    case (LIBSMTP_MIME_CUSTOM):
-      if (libsmtp_int_subtype != LIBSMTP_MIME_SUB_CUSTOM)
-      {
-        libsmtp_session->ErrorCode = LIBSMTP_BADMIME;
-        return NULL;
-      }
-
-      /* Custom type can have any encoding, of course */
-      if ((libsmtp_int_encoding < 0) || (libsmtp_int_encoding > LIBSMTP_MAX_ENC))
-      {
-        libsmtp_session->ErrorCode = LIBSMTP_BADENCODING;
-        return NULL;
-      }
-    break;
-  }
-  
-  /* Ok, we passed. Filling in the structure */
-  libsmtp_int_part->Subtype=libsmtp_int_subtype;
-  libsmtp_int_part->Encoding=libsmtp_int_encoding;
-  libsmtp_int_part->Description=g_string_new (libsmtp_int_desc);
 
   /* We adjust the counters */
   libsmtp_session->NumParts++;
@@ -529,6 +398,203 @@ int libsmtp_part_send (char *libsmtp_body_data, \
     return LIBSMTP_ERRORSENDFATAL;  /* FIXME This is not always the case */
     
   return LIBSMTP_NOERR;
+}
+
+/* libsmtp_int_check_part checks a part for correct settings */
+
+int libsmtp_int_check_part (struct libsmtp_part_struct *libsmtp_int_part)
+{
+  
+  /* Now we check if any invalid MIME arguments have been given.*/
+  
+  if ((libsmtp_int_part->Type < 0) || (libsmtp_int_part->Type > LIBSMTP_MAX_MIME))
+  {
+    return LIBSMTP_BADARGS;
+  }
+  
+  /* Now the same for the subtype argument. This must correspond to the
+     selected type */
+
+  switch (libsmtp_int_part->Type)
+  {
+    case (LIBSMTP_MIME_TEXT):
+      if ((libsmtp_int_part->Subtype < 0) || (libsmtp_int_part->Subtype > LIBSMTP_MAX_MIME_SUB0))
+      {
+        return LIBSMTP_BADMIME;
+      }
+      /* Text types can have any encoding */
+      if ((libsmtp_int_part->Encoding < 0) || (libsmtp_int_part->Encoding > LIBSMTP_MAX_ENC))
+      {
+        return LIBSMTP_BADENCODING;
+      }
+
+    break;
+
+    case (LIBSMTP_MIME_MESSAGE):
+      if ((libsmtp_int_part->Subtype < 1000) || (libsmtp_int_part->Subtype > LIBSMTP_MAX_MIME_SUB1))
+      {
+        return LIBSMTP_BADMIME;
+      }
+
+      /* Message types can have any encoding */
+      if ((libsmtp_int_part->Encoding < 0) || (libsmtp_int_part->Encoding > LIBSMTP_MAX_ENC))
+      {
+        return LIBSMTP_BADENCODING;
+      }
+    break;
+
+    case (LIBSMTP_MIME_IMAGE):
+      if ((libsmtp_int_part->Subtype < 2000) || (libsmtp_int_part->Subtype > LIBSMTP_MAX_MIME_SUB2))
+      {
+        return LIBSMTP_BADMIME;
+      }
+
+      /* Image types must be in a non-text encoding */
+      if ((libsmtp_int_part->Encoding < LIBSMTP_ENC_BINARY) || (libsmtp_int_part->Encoding > LIBSMTP_MAX_ENC))
+      {
+        return LIBSMTP_BADENCODING;
+      }
+    break;                         
+
+    case (LIBSMTP_MIME_AUDIO):
+      if ((libsmtp_int_part->Subtype < 3000) || (libsmtp_int_part->Subtype > LIBSMTP_MAX_MIME_SUB3))
+      {
+        return LIBSMTP_BADMIME;
+      }
+
+      /* Audio types must be in a non-text encoding */
+      if ((libsmtp_int_part->Encoding < LIBSMTP_ENC_BINARY) || (libsmtp_int_part->Encoding > LIBSMTP_MAX_ENC))
+      {
+        return LIBSMTP_BADENCODING;
+      }
+    break;
+
+    case (LIBSMTP_MIME_VIDEO):
+      if ((libsmtp_int_part->Subtype < 4000) || (libsmtp_int_part->Subtype > LIBSMTP_MAX_MIME_SUB4))
+      {
+        return LIBSMTP_BADMIME;
+      }
+
+      /* Video types must be in a non-text encoding */
+      if ((libsmtp_int_part->Encoding < LIBSMTP_ENC_BINARY) || (libsmtp_int_part->Encoding > LIBSMTP_MAX_ENC))
+      {
+        return LIBSMTP_BADENCODING;
+      }
+    break;
+
+    case (LIBSMTP_MIME_APPLICATION):
+      if ((libsmtp_int_part->Subtype < 5000) || (libsmtp_int_part->Subtype > LIBSMTP_MAX_MIME_SUB5))
+      {
+        return LIBSMTP_BADMIME;
+      }
+
+      /* Application types must be in a non-text encoding */
+      if ((libsmtp_int_part->Encoding < LIBSMTP_ENC_BINARY) || (libsmtp_int_part->Encoding > LIBSMTP_MAX_ENC))
+      {
+        return LIBSMTP_BADENCODING;
+      }
+    break;
+
+    case (LIBSMTP_MIME_MULTIPART):
+      if ((libsmtp_int_part->Subtype < 6000) || (libsmtp_int_part->Subtype > LIBSMTP_MAX_MIME_SUB6))
+      {
+        return LIBSMTP_BADMIME;
+      }
+
+      /* Application types must be in a text encoding, and should only be
+         7bit */
+      if (libsmtp_int_part->Encoding != LIBSMTP_ENC_7BIT)
+      {
+        return LIBSMTP_BADENCODING;
+      }
+    break;
+
+    case (LIBSMTP_MIME_CUSTOM):
+      if (libsmtp_int_part->Subtype != LIBSMTP_MIME_SUB_CUSTOM)
+      {
+        return LIBSMTP_BADMIME;
+      }
+
+      /* Custom type can have any encoding, of course */
+      if ((libsmtp_int_part->Encoding < 0) || (libsmtp_int_part->Encoding > LIBSMTP_MAX_ENC))
+      {
+        return LIBSMTP_BADENCODING;
+      }
+    break;
+  }
+  
+  return 0;
+}
+
+/* These functions lookup the name of types, subtypes and encodings for a
+   part. They only perform glancing checking of parameters, so you should
+   check the mime settings beforehand with libsmtp_int_check_parts */
+
+const char *libsmtp_int_lookup_mime_type (struct libsmtp_part_struct *libsmtp_int_part)
+{
+  if ((libsmtp_int_part->Type > 0) && (libsmtp_int_part->Type < LIBSMTP_MAX_MIME))
+  {
+    if (libsmtp_int_part->Type == LIBSMTP_MIME_CUSTOM)
+      return libsmtp_int_part->CustomType->str;
+    else
+      return libsmtp_mime_types[libsmtp_int_part->Type];
+  }
+  else
+    return NULL;
+}
+
+const char *libsmtp_int_lookup_mime_subtype (struct libsmtp_part_struct *libsmtp_int_part)
+{
+  if (libsmtp_int_check_part (libsmtp_int_part))
+  {
+    switch (libsmtp_int_part->Type)
+    {
+      case LIBSMTP_MIME_TEXT:
+        return libsmtp_mime_subtypes0[libsmtp_int_part->Subtype];
+
+      case LIBSMTP_MIME_MESSAGE:
+        return libsmtp_mime_subtypes1[libsmtp_int_part->Subtype];
+
+      case LIBSMTP_MIME_IMAGE:
+        return libsmtp_mime_subtypes2[libsmtp_int_part->Subtype];
+
+      case LIBSMTP_MIME_AUDIO:
+        return libsmtp_mime_subtypes3[libsmtp_int_part->Subtype];
+
+      case LIBSMTP_MIME_VIDEO:
+        return libsmtp_mime_subtypes4[libsmtp_int_part->Subtype];
+
+      case LIBSMTP_MIME_APPLICATION:
+        return libsmtp_mime_subtypes5[libsmtp_int_part->Subtype];
+
+      case LIBSMTP_MIME_MULTIPART:
+        return libsmtp_mime_subtypes6[libsmtp_int_part->Subtype];
+
+      case LIBSMTP_MIME_CUSTOM:
+        return libsmtp_int_part->CustomSubtype->str;
+      
+      default:
+        return NULL;
+    }
+  }
+  else
+    return NULL;
+}
+
+const char *libsmtp_int_lookup_mime_charset (struct libsmtp_part_struct *libsmtp_int_part)
+{
+  if ((libsmtp_int_part->Charset > 0) && (libsmtp_int_part->Charset < LIBSMTP_MAX_CHARSET))
+    return libsmtp_mime_charsets[libsmtp_int_part->Charset];
+  else
+    return NULL;
+}
+
+const char *libsmtp_int_lookup_mime_encoding (struct libsmtp_part_struct *libsmtp_int_part)
+{
+  if ((libsmtp_int_part->Encoding > 0) && (libsmtp_int_part->Encoding < LIBSMTP_MAX_ENC))
+    return libsmtp_mime_encodings[libsmtp_int_part->Encoding];
+  else
+    return NULL;
 }
 
 #endif /* LIBSMTP_USE_MIME */

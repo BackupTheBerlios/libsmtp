@@ -706,6 +706,7 @@ int libsmtp_body_end (struct libsmtp_session_struct *libsmtp_session)
   return LIBSMTP_NOERR;
 }
 
+
 /* This function ends the SMTP session. It can only be used in certain stages,
    notably in all dialogue modes. */
 

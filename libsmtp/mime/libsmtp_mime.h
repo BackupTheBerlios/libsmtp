@@ -168,4 +168,6 @@
   #define LIBSMTP_PART_EXISTS	2052	/* This part exists already */
   #define LIBSMTP_PARTSERR	2053	/* Generic parts error */
   #define LIBSMTP_PARTSFINISHED	2054	/* All parts finished */
+  
+  #define LIBSMTP_MAX_MIME_ERRNO	2054
 /* #endif LIBSMTP_USE_MIME */
