@@ -37,7 +37,7 @@ struct libsmtp_session_struct {
   GList *failedTo;	/* List of failed recipients containing the response for
   			   each failure */
   GList *failedCC;	/* The same for CC recipients */
-  Glist *failedBCC;	/* And for BCC recipients */
+  GList *failedBCC;	/* And for BCC recipients */
 
   GString *Subject;	/* Mail subject */
   GString *LastResponse;	/* Last SMTP response string from server */
@@ -47,7 +47,7 @@ struct libsmtp_session_struct {
   int DialogueSent;	/* Number of SMTP dialogue lines sent */
   int DialogueBytesSent;	/* Bytes of SMTP dialogue data sent */
   int HeadersSent;  	/* Number of header lines sent */
-  int HeadersBytesSent	/* Bytes of header data sent */
+  int HeadersBytesSent;	/* Bytes of header data sent */
   int BodyBytesSent;	/* Bytes of body data sent */
 };
 
@@ -63,7 +63,7 @@ int libsmtp_set_environment (char *, char *, struct libsmtp_session_struct *);
 
 int libsmtp_dialogue_send (char *, struct libsmtp_session_struct *);
 
-int libsmtp_dialogue (structr libsmtp_session_struct *);
+int libsmtp_dialogue (struct libsmtp_session_struct *);
 
 int libsmtp_header_send (char *, struct libsmtp_session_struct *);
 

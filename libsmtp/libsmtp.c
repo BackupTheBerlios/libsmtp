@@ -23,8 +23,17 @@ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  U
 Kevin Read <myself@obsidian.de>
 Thu Aug 16 2001 */
 
-#include "libsmtp.h"
 #include <glib.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <stdlib.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <string.h>
+
+#include "libsmtp.h"
 
 struct libsmtp_session_struct *libsmtp_connect (char *libsmtp_server, unsigned int libsmtp_port, unsigned int libsmtp_flags)
 {
@@ -33,36 +42,38 @@ struct libsmtp_session_struct *libsmtp_connect (char *libsmtp_server, unsigned i
   struct libsmtp_session_struct *libsmtp_session; /* Our session struct */
   struct hostent *libsmtp_mailhost;		/* We need this to convert the hostname to an IP */
   struct sockaddr_in libsmtp_sock;		/* We need this for the connection */
-  char libsmtp_temp_buffer[4098];	/* Temp string for reads and writes */
-  char libsmtp_search_buffer[4098];	/* Used for searching in strings */
+  char *libsmtp_temp_buffer;		/* Temp string for reads and writes */
+  char *libsmtp_search_buffer;		/* Used for searching in strings */
   GString *libsmtp_response;		/* Response save */
 
   /* First we zero out the session struct so that everything is NULL'ed.
      This is especially important to keep Glibs GList functions happy. */
 
   bzero (libsmtp_session, sizeof (libsmtp_session));
+  libsmtp_temp_buffer=malloc(4096);
+  bzero (libsmtp_temp_buffer, 4096);
 
   /* We need a socket anyway :) */
-  libsmtp_socket = socket (PF_INET, SOCK_STREAM, 0)
+  libsmtp_socket = socket (PF_INET, SOCK_STREAM, 0);
   
-  /* Socket ok?
+  /* Socket ok? */
   if (libsmtp_socket < 0)
   {
-    libsmtp_session.ErrorCode = LIBSMTP_SOCKETNOCREATE;
+    libsmtp_session->ErrorCode = LIBSMTP_SOCKETNOCREATE;
     return NULL;
   }
   
   /* Now we need to get the IP from the hostname... */
-  if ((hostname=gethostbyname((const char *)libsmtp_server))==NULL)
+  if ((libsmtp_mailhost=gethostbyname((const char *)libsmtp_server))==NULL)
   {
-    libsmtp_session.ErrorCode = LIBSMTP_HOSTNOTFOUND;
+    libsmtp_session->ErrorCode = LIBSMTP_HOSTNOTFOUND;
     close (libsmtp_socket);
     return NULL;
   }
   
   /* This struct is needed for the connect call */
   libsmtp_sock.sin_family = AF_INET;
-  libsmtp_sock.sin_addr = *(struct in_addr *)hostname->h_addr;
+  libsmtp_sock.sin_addr = *(struct in_addr *)libsmtp_mailhost->h_addr;
   if (!libsmtp_port)
     libsmtp_sock.sin_port = htons (25);
   else
@@ -72,37 +83,49 @@ struct libsmtp_session_struct *libsmtp_connect (char *libsmtp_server, unsigned i
 
   if (connect (libsmtp_socket, (struct sockaddr *) &libsmtp_sock, sizeof (libsmtp_sock) ) < 0)
   {
-    libsmtp_session.ErrorCode = LIBSMTP_CONNECTERR;
+    libsmtp_session->ErrorCode = LIBSMTP_CONNECTERR;
     close (libsmtp_socket);
     return NULL;
   }
   
   /* Ok, lets set the session socket to the right handler */
-  libsmtp_session.socket = libsmtp_socket;
+  libsmtp_session->socket = libsmtp_socket;
   
   /* Now we should read the mail servers greeting */
 
-  if ((libsmtp_bytes_read=recv (libsmtp_session.socket, libsmtp_buffer, 4096, 0))<0)
+  libsmtp_bytes_read=recv (libsmtp_socket, libsmtp_temp_buffer, 20, 0);
+  if (libsmtp_bytes_read<0)
   {
-    libsmtp_session.ErrorCode=LIBSMTP_ERRORREADFATAL;
-    close (libsmtp_session.socket)
+    libsmtp_session->ErrorCode=LIBSMTP_ERRORREADFATAL;
+    close (libsmtp_session->socket);
     return NULL;
   }
+/*  printf ("%s\n", libsmtp_temp_buffer); */
   
   /* Ok, take the first part of the response ... */
-  libsmtp_search_string = strtok (libsmtp_buffer, " ");
+  libsmtp_search_buffer = strtok (libsmtp_temp_buffer, " ");
+  
+/*  printf ("%s\n", libsmtp_search_buffer); */
 
   /* and extract the response code */
-  libsmtp_session.LastResponseCode = atoi(libsmtp_search_string);
+  libsmtp_session->LastResponseCode = atoi(libsmtp_search_buffer);
   
   /* Then fetch the rest of the string and save it */
-  libsmtp_search_string = strtok (NULL, " ");
-  libsmtp_session.Lastresponse = GString_new (libsmtp_search_string);
+  libsmtp_search_buffer = strtok (NULL, "\0");
+  
+  printf ("%s\n", libsmtp_search_buffer);
+  
+/*  libsmtp_session->LastResponse = NULL;
+  libsmtp_session->LastResponse = g_string_new (NULL);
+  
+  g_string_assign (libsmtp_session->LastResponse, libsmtp_search_buffer); */
+  
+  printf ("%s\n", &libsmtp_session->LastResponse);
 
-  if (libsmtp_session.LastResponseCode != 220)
+  if (libsmtp_session->LastResponseCode != 220)
   {
-    libsmtp_session.ErrorC = LIBSMTP_NOTWELCOME;
-    close (libsmtp_session.socket);
+    libsmtp_session->ErrorCode = LIBSMTP_NOTWELCOME;
+    close (libsmtp_session->socket);
     return NULL;
   }
 }
