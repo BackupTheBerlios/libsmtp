@@ -574,11 +574,11 @@ int libsmtp_header_send (char *libsmtp_header_string, \
 
 
 
-/* This function sends body data. It can only be used in the appropriate
+/* This function sends raw body data. It can only be used in the appropriate
    stage. The data to be sent has to be formatted according to RFC822 and
    the MIME standards. */
 
-int libsmtp_body_send (char *libsmtp_body_data, \
+int libsmtp_body_send_raw (char *libsmtp_body_data, \
             struct libsmtp_session_struct *libsmtp_session)
 {
 

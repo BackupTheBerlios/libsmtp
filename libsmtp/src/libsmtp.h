@@ -42,12 +42,12 @@
 #define LIBSMTP_FINISHED_STAGE	128
 #define LIBSMTP_QUIT_STAGE	256
 
-
 /* Module types */
 
 #define LIBSMTP_BODY_MODULE	0
-#define LIBSMTP_HEADER_MODULE	1
-#define LIBSMTP_DIALOGUE_MODULE	2
+#define LIBSMTP_MIME_MODULE	1
+#define LIBSMTP_HEADER_MODULE	2
+#define LIBSMTP_DIALOGUE_MODULE	3
 
 /* These are the error definitions */
 
@@ -103,6 +103,9 @@ struct libsmtp_session_struct {
   unsigned int HeadersSent;  	/* Number of header lines sent */
   unsigned int HeaderBytes;	/* Bytes of header data sent */
   unsigned long int BodyBytes;	/* Bytes of body data sent */
+  
+  int mainpart_id;	/* ID of part describing main MIME type */
+  void *mainpart_ptr;	/* Pointer to main part */
 };
 
 struct libsmtp_session_struct *libsmtp_session_initialize (void);
@@ -125,7 +128,7 @@ int libsmtp_header_send (char *, struct libsmtp_session_struct *);
 
 int libsmtp_headers (struct libsmtp_session_struct *);
 
-int libsmtp_body_send (char *, struct libsmtp_session_struct *);
+int libsmtp_body_send_raw (char *, struct libsmtp_session_struct *);
 
 int libsmtp_body_end (struct libsmtp_session_struct *);
 
@@ -141,4 +144,4 @@ int libsmtp_int_send (GString *, struct libsmtp_session_struct *, int);
 
 int libsmtp_int_read (GString *, struct libsmtp_session_struct *, int);
 
-#endif
+#endif  /* LIB_SMTP_H */
