@@ -162,9 +162,21 @@ int libsmtp_dialogue (struct libsmtp_session_struct *libsmtp_session)
 {
   int libsmtp_temp;
   GString *libsmtp_temp_gstring;
+  GList *libsmtp_temp_glist, *libsmtp_swap_glist;
+    /* temp_glist is the index into the lists of recipients,
+       swap_glist is needed to adjust the beginning of of the list */
   
   libsmtp_temp_gstring = g_string_new(NULL);
   
+  /* This can only be used if the hello stage is finished, but we haven't
+     entered data stage yet */
+  if ((libsmtp_session->Stage < LIBSMTP_HELLO_STAGE) ||
+      (libsmtp_session->Stage >= LIBSMTP_DATA_STAGE))
+  {
+    libsmtp_session->ErrorCode = LIBSMTP_BADSTAGE;
+    return LIBSMTP_BADSTAGE;
+  }
+
   /* First we check if sender, subject and at least one recipient has
      been set */
   
@@ -217,9 +229,9 @@ int libsmtp_dialogue (struct libsmtp_session_struct *libsmtp_session)
   for (libsmtp_temp=0; libsmtp_temp < g_list_length(libsmtp_session->To);\
          libsmtp_temp++)
   {
-    libsmtp_session->To=g_list_nth (libsmtp_session->To, libsmtp_temp);
+    libsmtp_temp_glist=g_list_nth (libsmtp_session->To, libsmtp_temp);
     g_string_sprintf (libsmtp_temp_gstring, "RCPT TO: %s\r\n", \
-        libsmtp_session->To->data);
+        libsmtp_temp_glist->data);
     
 
     /* Every recipient gets sent to the server */
@@ -237,27 +249,21 @@ int libsmtp_dialogue (struct libsmtp_session_struct *libsmtp_session)
       return LIBSMTP_ERRORREADFATAL;
     }
 
+    /* We write the response code into the response linked
+       list so that denial reasons can be seen later */
+      
+    libsmtp_session->ToResponse = g_list_append (libsmtp_session->ToResponse,\
+       (char *)strdup (libsmtp_temp_gstring->str));
+
     /* Did he like this one? */
     if (libsmtp_session->LastResponseCode > 299)
     {
       libsmtp_session->ErrorCode = LIBSMTP_WONTACCEPTREC;
       
-      /* No, he didn't. We write the response code into the failed linked
-         list so that the denial reason can be seen later on */
+      /* No, he didn't. */
       
-      libsmtp_session->ToResponse=g_list_insert (libsmtp_session->ToResponse,
-         libsmtp_temp_gstring->str, libsmtp_temp);
-
       libsmtp_session->NumFailedTo++;
     }
-    else
-    {
-      /* Ok, he liked it. We write his response in the string anyway */
-      libsmtp_session->ToResponse=g_list_insert (libsmtp_session->ToResponse,
-         libsmtp_temp_gstring->str, libsmtp_temp);
-      
-    }
-
   }
 
   /* Now we go through all CC recipients */
@@ -265,9 +271,9 @@ int libsmtp_dialogue (struct libsmtp_session_struct *libsmtp_session)
   for (libsmtp_temp=0; libsmtp_temp < g_list_length(libsmtp_session->CC);\
          libsmtp_temp++)
   {
-    libsmtp_session->CC=g_list_nth (libsmtp_session->CC, libsmtp_temp);
+    libsmtp_temp_glist=g_list_nth (libsmtp_session->CC, libsmtp_temp);
     g_string_sprintf (libsmtp_temp_gstring, "RCPT TO: %s\r\n", \
-        libsmtp_session->CC->data);
+        libsmtp_temp_glist->data);
     
 
     /* Every recipient gets sent to the server */
@@ -285,25 +291,19 @@ int libsmtp_dialogue (struct libsmtp_session_struct *libsmtp_session)
       return LIBSMTP_ERRORREADFATAL;
     }
 
+    /* We write the response code into the response linked */
+      
+    libsmtp_session->CCResponse = g_list_append (libsmtp_session->CCResponse,\
+       (char *)strdup (libsmtp_temp_gstring->str));
+
     /* Did he like this one? */
     if (libsmtp_session->LastResponseCode > 299)
     {
       libsmtp_session->ErrorCode = LIBSMTP_WONTACCEPTREC;
       
-      /* No, he didn't. We write the response code into the failed linked
-         list so that the denial reason can be seen later on */
+      /* No, he didn't. Increase the counter. */
       
-      libsmtp_session->CCResponse=g_list_insert (libsmtp_session->CCResponse,
-         libsmtp_temp_gstring->str, libsmtp_temp);
-
       libsmtp_session->NumFailedCC++;
-    }
-    else
-    {
-      /* Ok, he liked it. We write his response in the string anyway */
-      libsmtp_session->CCResponse=g_list_insert (libsmtp_session->CCResponse,
-         libsmtp_temp_gstring->str, libsmtp_temp);
-      
     }
   }
 
@@ -312,9 +312,9 @@ int libsmtp_dialogue (struct libsmtp_session_struct *libsmtp_session)
   for (libsmtp_temp=0; libsmtp_temp < g_list_length(libsmtp_session->BCC);\
          libsmtp_temp++)
   {
-    libsmtp_session->BCC=g_list_nth (libsmtp_session->BCC, libsmtp_temp);
+    libsmtp_temp_glist=g_list_nth (libsmtp_session->BCC, libsmtp_temp);
     g_string_sprintf (libsmtp_temp_gstring, "RCPT TO: %s\r\n", \
-        libsmtp_session->BCC->data);
+        libsmtp_temp_glist->data);
     
 
     /* Every recipient gets sent to the server */
@@ -332,27 +332,57 @@ int libsmtp_dialogue (struct libsmtp_session_struct *libsmtp_session)
       return LIBSMTP_ERRORREADFATAL;
     }
 
+    /* No, he didn't. We write the response code into the response linked
+         list */
+      
+      libsmtp_session->BCCResponse = g_list_append (libsmtp_session->BCCResponse,\
+         (char *)strdup (libsmtp_temp_gstring->str));
+
     /* Did he like this one? */
     if (libsmtp_session->LastResponseCode > 299)
     {
       libsmtp_session->ErrorCode = LIBSMTP_WONTACCEPTREC;
       
-      /* No, he didn't. We write the response code into the failed linked
-         list so that the denial reason can be seen later on */
-      
-      libsmtp_session->BCCResponse=g_list_insert (libsmtp_session->BCCResponse,
-         libsmtp_temp_gstring->str, libsmtp_temp);
-
       libsmtp_session->NumFailedBCC++;
     }
-    else
-    {
-      /* Ok, he liked it. We write his response in the string anyway */
-      libsmtp_session->BCCResponse=g_list_insert (libsmtp_session->BCCResponse,
-         libsmtp_temp_gstring->str, libsmtp_temp);
-      
-    }
   }
+  return LIBSMTP_NOERR;
+}
+
+/* With this function you can send SMTP dialogue strings yourself */
+
+int libsmtp_dialogue_send (char *libsmtp_dialogue_string, \
+         struct libsmtp_session_struct *libsmtp_session)
+{
+  GString *libsmtp_temp_gstring;
+  
+  libsmtp_temp_gstring = g_string_new(libsmtp_dialogue_string);
+  
+  /* This can only be used if the hello stage is finished, but we haven't
+     entered data stage yet */
+  if ((libsmtp_session->Stage < LIBSMTP_HELLO_STAGE) ||
+      (libsmtp_session->Stage >= LIBSMTP_DATA_STAGE))
+  {
+    libsmtp_session->ErrorCode = LIBSMTP_BADSTAGE;
+    return LIBSMTP_BADSTAGE;
+  }
+  
+  if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 2))
+  {
+    libsmtp_session->ErrorCode = LIBSMTP_ERRORSENDFATAL;
+    return LIBSMTP_ERRORSENDFATAL;
+  }
+
+  /* We have to read the servers response of course */
+  if (libsmtp_int_read (libsmtp_temp_gstring, libsmtp_session, 2))
+  {
+    libsmtp_session->ErrorCode = LIBSMTP_ERRORREADFATAL;
+    return LIBSMTP_ERRORREADFATAL;
+  }
+
+  /* We don't look at the response code here - the app will have to do that */
+  
+  return LIBSMTP_NOERR;
 }
 
 
@@ -361,40 +391,48 @@ int libsmtp_dialogue (struct libsmtp_session_struct *libsmtp_session)
 
 int libsmtp_headers (struct libsmtp_session_struct *libsmtp_session)
 {
-  GString *libsmtp_temp_gstring;
+
   int libsmtp_temp;
+  GString *libsmtp_temp_gstring;
+  GList *libsmtp_temp_glist;
   
-  /* Are we at the end of the dialogue stage */
-  if (libsmtp_session->Stage < LIBSMTP_RECIPIENT_STAGE)
+  /* Are we at the end of the dialogue stage, but haven't sent the
+     body yet? */
+  if ((libsmtp_session->Stage < LIBSMTP_RECIPIENT_STAGE) || \
+      (libsmtp_session->Stage > LIBSMTP_DATA_STAGE))
   {
     libsmtp_session->ErrorCode = LIBSMTP_BADSTAGE;
     return LIBSMTP_BADSTAGE;
   }
 
-  /* Great finality. After this no more dialogue can go on */
-  libsmtp_temp_gstring = g_string_new ("DATA\r\n");
-  
-  if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 2))
-    return LIBSMTP_ERRORSENDFATAL;
-  
-  /* What has he say to a little bit of DATA? */
-  
-  if (libsmtp_int_read (libsmtp_temp_gstring, libsmtp_session, 2))
+  /* Maybe we are already in DATA mode so... */
+  if (libsmtp_session->Stage < LIBSMTP_DATA_STAGE)
   {
-    libsmtp_session->ErrorCode = LIBSMTP_ERRORREADFATAL;
-    return LIBSMTP_ERRORREADFATAL;
-  }
+    /* Great finality. After this no more dialogue can go on */
+    libsmtp_temp_gstring = g_string_new ("DATA\r\n");
+  
+    if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 2))
+      return LIBSMTP_ERRORSENDFATAL;
+  
+    /* What has he say to a little bit of DATA? */
+  
+    if (libsmtp_int_read (libsmtp_temp_gstring, libsmtp_session, 2))
+    {
+      libsmtp_session->ErrorCode = LIBSMTP_ERRORREADFATAL;
+      return LIBSMTP_ERRORREADFATAL;
+    }
 
-  if (libsmtp_session->LastResponseCode != 354)
-  {
-    libsmtp_session->ErrorCode = LIBSMTP_WONTACCEPTDATA;
-    close(libsmtp_session->socket);
-    libsmtp_session->socket=0;
-    return LIBSMTP_WONTACCEPTDATA;
-  }
+    if (libsmtp_session->LastResponseCode != 354)
+    {
+      libsmtp_session->ErrorCode = LIBSMTP_WONTACCEPTDATA;
+      close(libsmtp_session->socket);
+      libsmtp_session->socket=0;
+      return LIBSMTP_WONTACCEPTDATA;
+    }
 
-  /* We enter the data stage now */
-  libsmtp_session->Stage = LIBSMTP_HEADERS_STAGE;
+    /* We enter the data stage now */
+    libsmtp_session->Stage = LIBSMTP_HEADERS_STAGE;
+  }
 
   /* Now we send through all the headers. No more responses will come from
      the mailserver until we end the DATA part. */
@@ -410,7 +448,7 @@ int libsmtp_headers (struct libsmtp_session_struct *libsmtp_session)
   /* Then the Subject: header */
 
   g_string_sprintf (libsmtp_temp_gstring, "Subject: %s\n", \
-                      libsmtp_session->From->str);
+                      libsmtp_session->Subject->str);
   
   if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 1))
     return LIBSMTP_ERRORSENDFATAL;
@@ -423,17 +461,17 @@ int libsmtp_headers (struct libsmtp_session_struct *libsmtp_session)
        libsmtp_temp++)
   {
     /* Select the respective node of the linked list */
-    libsmtp_session->To=g_list_nth (libsmtp_session->To, libsmtp_temp);
+    libsmtp_temp_glist=g_list_nth (libsmtp_session->To, libsmtp_temp);
 
     /* If this is the last entry of the list, don't append a comma */
-    if (libsmtp_temp==g_list_length (libsmtp_session->To))
+    if (libsmtp_temp==(g_list_length (libsmtp_session->To)-1))
     {
-      g_string_append (libsmtp_temp_gstring, libsmtp_session->To->data);
+      g_string_append (libsmtp_temp_gstring, libsmtp_temp_glist->data);
       g_string_append (libsmtp_temp_gstring, "\r\n");
     }
     else
     {
-      g_string_append (libsmtp_temp_gstring, libsmtp_session->To->data);
+      g_string_append (libsmtp_temp_gstring, libsmtp_temp_glist->data);
       g_string_append (libsmtp_temp_gstring, ", ");
     }
   } 
@@ -452,17 +490,17 @@ int libsmtp_headers (struct libsmtp_session_struct *libsmtp_session)
          libsmtp_temp++)
     {
       /* Select the respective node of the linked list */
-      libsmtp_session->To=g_list_nth (libsmtp_session->CC, libsmtp_temp);
+      libsmtp_temp_glist=g_list_nth (libsmtp_session->CC, libsmtp_temp);
 
       /* If this is the last entry of the list, don't append a comma */
-      if (libsmtp_temp==g_list_length (libsmtp_session->CC))
+      if (libsmtp_temp==(g_list_length (libsmtp_session->CC)-1))
       {
-        g_string_append (libsmtp_temp_gstring, libsmtp_session->To->data);
+        g_string_append (libsmtp_temp_gstring, libsmtp_temp_glist->data);
         g_string_append (libsmtp_temp_gstring, "\r\n");
       }
       else
       {
-        g_string_append (libsmtp_temp_gstring, libsmtp_session->To->data);
+        g_string_append (libsmtp_temp_gstring, libsmtp_temp_glist->data);
         g_string_append (libsmtp_temp_gstring, ", ");
       }
     } 
@@ -478,6 +516,62 @@ int libsmtp_headers (struct libsmtp_session_struct *libsmtp_session)
   if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 1))
     return LIBSMTP_ERRORSENDFATAL;  
 }
+
+
+/* With this function you can send custom headers. */
+
+int libsmtp_header_send (char *libsmtp_header_string, \
+       struct libsmtp_session_struct *libsmtp_session)
+{
+  GString *libsmtp_temp_gstring;
+
+  /* Are we at the end of the dialogue stage, but haven't sent the
+     body yet? */
+  if ((libsmtp_session->Stage < LIBSMTP_RECIPIENT_STAGE) || \
+      (libsmtp_session->Stage > LIBSMTP_HEADERS_STAGE))
+  {
+    libsmtp_session->ErrorCode = LIBSMTP_BADSTAGE;
+    return LIBSMTP_BADSTAGE;
+  }
+
+  /* Maybe we are already in DATA mode so... */
+  if (libsmtp_session->Stage < LIBSMTP_DATA_STAGE)
+  {
+    /* Great finality. After this no more dialogue can go on */
+    libsmtp_temp_gstring = g_string_new ("DATA\r\n");
+  
+    if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 2))
+      return LIBSMTP_ERRORSENDFATAL;
+  
+    /* What has he say to a little bit of DATA? */
+  
+    if (libsmtp_int_read (libsmtp_temp_gstring, libsmtp_session, 2))
+    {
+      libsmtp_session->ErrorCode = LIBSMTP_ERRORREADFATAL;
+      return LIBSMTP_ERRORREADFATAL;
+    }
+
+    if (libsmtp_session->LastResponseCode != 354)
+    {
+      libsmtp_session->ErrorCode = LIBSMTP_WONTACCEPTDATA;
+      close(libsmtp_session->socket);
+      libsmtp_session->socket=0;
+      return LIBSMTP_WONTACCEPTDATA;
+    }
+
+    /* We enter the data stage now */
+    libsmtp_session->Stage = LIBSMTP_DATA_STAGE;
+  }
+
+  /* Ok. Lets send these custom headers. */
+  libsmtp_temp_gstring = g_string_new (libsmtp_header_string);
+  
+  if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 1))
+    return LIBSMTP_ERRORSENDFATAL;
+  
+  return LIBSMTP_NOERR;
+}
+
 
 
 /* This function sends body data. It can only be used in the appropriate

@@ -98,11 +98,11 @@ struct libsmtp_session_struct {
   GString *ErrorModule;	/* Module were error was caused */
   int Stage;		/* SMTP transfer stage */
 
-  int DialogueSent;	/* Number of SMTP dialogue lines sent */
-  int DialogueBytes;	/* Bytes of SMTP dialogue data sent */
-  int HeadersSent;  	/* Number of header lines sent */
-  int HeaderBytes;	/* Bytes of header data sent */
-  int BodyBytes;	/* Bytes of body data sent */
+  unsigned int DialogueSent;	/* Number of SMTP dialogue lines sent */
+  unsigned int DialogueBytes;	/* Bytes of SMTP dialogue data sent */
+  unsigned int HeadersSent;  	/* Number of header lines sent */
+  unsigned int HeaderBytes;	/* Bytes of header data sent */
+  unsigned long int BodyBytes;	/* Bytes of body data sent */
 };
 
 struct libsmtp_session_struct *libsmtp_session_initialize (void);
