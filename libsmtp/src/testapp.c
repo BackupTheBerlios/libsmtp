@@ -31,7 +31,8 @@ int main(void)
 {
 
   struct libsmtp_session_struct *mailsession;
-  mailsession = calloc (1, sizeof (struct libsmtp_session_struct));
+  mailsession = libsmtp_session_initialize();
+
   if (libsmtp_connect ("container",0,0,mailsession))
     printf ("Ha!\n");
   

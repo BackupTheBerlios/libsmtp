@@ -43,11 +43,9 @@ int libsmtp_set_environment (char *from, char *subject, unsigned int flags,
          struct libsmtp_session_struct *data)
 
 With this function you can set additional session parameters for this
-session. This should be set before the dialogue is begun. You can set the
-individual strings in the libsmtp_session_struct by yourself if you want
-to, instead of using this function. Please note that I use glib's GString
-string type for the strings.
-Returns: Nothing really :)
+session. This should be set before the dialogue is begun. Flags doesn't have
+any meaning at the moment.
+Returns: 0 for success
 
 
 int libsmtp_dialogue_send (char *line, struct libsmtp_session_struct *data)

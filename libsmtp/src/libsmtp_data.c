@@ -55,9 +55,13 @@ struct libsmtp_session_struct *libsmtp_session_initialize (void)
 
 int libsmtp_free (struct libsmtp_session_struct *libsmtp_session)
 {
-  /* Lets close the socket again - it can't hurt */
+  /* Lets see if we gotta close the socket */
   
-  close (libsmtp_session->socket);
+  if (libsmtp_session->socket)
+  {
+    close (libsmtp_session->socket);
+    libsmtp_session->socket=0;
+  }
   
   /* All GStrings and GLists must be freed */
   g_list_free (libsmtp_session->To);
@@ -75,4 +79,62 @@ int libsmtp_free (struct libsmtp_session_struct *libsmtp_session)
   free (libsmtp_session);
 
   return 0;
+}
+
+/* This function sets the environment for the session. At the moment it
+   just sets subject and sender address. SSL and auth stuff should be set
+   here in the future. */
+
+int libsmtp_set_environment (char *libsmtp_int_From, char *libsmtp_int_Subject,\
+      unsigned int libsmtp_int_flags, struct libsmtp_session_struct *libsmtp_session)
+{
+  if ((!strlen (libsmtp_int_From)) || (!strlen (libsmtp_int_Subject)))
+  {
+    libsmtp_session->ErrorCode = LIBSMTP_BADARGS;
+    return LIBSMTP_BADARGS;
+  }
+  
+  g_string_assign (libsmtp_session->From, libsmtp_int_From);
+  g_string_assign (libsmtp_session->Subject, libsmtp_int_Subject);
+}
+
+int libsmtp_add_recipient (int libsmtp_int_rec_type, char *libsmtp_int_address,
+      struct libsmtp_session_struct *libsmtp_session)
+{
+  /* Lets just check that rec_type isn't an invalid value */
+  if ((libsmtp_int_rec_type < 0) || (libsmtp_int_rec_type > LIBSMTP_REC_MAX))
+  {
+    libsmtp_session->ErrorCode = LIBSMTP_BADARGS;
+    return LIBSMTP_BADARGS;
+  }
+
+  /* Zero length string as argument? */
+  if (!strlen (libsmtp_int_address))
+  {
+    libsmtp_session->ErrorCode = LIBSMTP_BADARGS;
+    return LIBSMTP_BADARGS;
+  }
+  
+  switch (libsmtp_int_rec_type)
+  {
+    case (LIBSMTP_REC_TO):
+      g_list_append (libsmtp_session->To, libsmtp_int_address);
+      break;
+
+    case (LIBSMTP_REC_CC):
+      g_list_append (libsmtp_session->CC, libsmtp_int_address);
+      break;
+
+    case (LIBSMTP_REC_BCC):
+      g_list_append (libsmtp_session->BCC, libsmtp_int_address);
+      break;
+
+    default:
+      /* Lets just check that rec_type isn't an invalid value */
+      libsmtp_session->ErrorCode = LIBSMTP_BADARGS;
+      return LIBSMTP_BADARGS;
+      break;
+  }
+  
+  return LIBSMTP_NOERR;
 }

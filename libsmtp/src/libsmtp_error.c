@@ -65,14 +65,15 @@ const char *libsmtp_strerr_strings_fatal[] = {
 
 const char *libsmtp_strerr_strings_nonfatal[] = {
   "Error reading from socket",   /* 1024 */
-  "Error sending to socket"
+  "Error sending to socket",
+  "Bad arguments passed to libsmtp_function"
 };
 
 const char *libsmtp_undef_errstr = "Undefined error";  
 
 #define MAX_FATAL_ERRNO 7
 #define MIN_NONFATAL_ERRNO 1024
-#define MAX_NONFATAL_ERRNO 1024+1
+#define MAX_NONFATAL_ERRNO 1024+2
 
 const char *libsmtp_strerr (struct libsmtp_session_struct *libsmtp_session)
 {

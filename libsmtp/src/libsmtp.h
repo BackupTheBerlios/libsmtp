@@ -14,6 +14,14 @@
 #define LIBSMTP_HAS_ETRN	64
 #define LIBSMTP_HAS_ENHANCEDSTATUSCODES	128
 
+/* Recipient types for libsmtp_add_recipient */
+
+#define LIBSMTP_REC_MAX	2
+
+#define LIBSMTP_REC_TO	0
+#define LIBSMTP_REC_CC	1
+#define LIBSMTP_REC_BCC	2
+
 /* These are the error definitions */
 
 /* Error codes below 1024 are fatal errors - the socket will be closed */
@@ -29,6 +37,7 @@
 /* Codes >= 1024 are errors that are not fatal to the whole SMTP session */
 #define LIBSMTP_ERRORREAD	1024
 #define LIBSMTP_ERRORSEND	1025
+#define LIBSMTP_BADARGS		1026
 
 #define LIBSMTP_UNDEFERR	10000 /* ErrorCode was undefined!! */
 /* This structure defines one libsmtp session */
@@ -71,7 +80,7 @@ const char *libsmtp_strerr (struct libsmtp_session_struct *);
 
 int libsmtp_add_recipient (int, char *, struct libsmtp_session_struct *);
 
-int libsmtp_set_environment (char *, char *, struct libsmtp_session_struct *);
+int libsmtp_set_environment (char *, char *, unsigned int, struct libsmtp_session_struct *);
 
 int libsmtp_dialogue_send (char *, struct libsmtp_session_struct *);
 

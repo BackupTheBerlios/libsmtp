@@ -152,6 +152,7 @@ int libsmtp_connect (char *libsmtp_server, unsigned int libsmtp_port, unsigned i
   {
     libsmtp_session->ErrorCode = LIBSMTP_HOSTNOTFOUND;
     close (libsmtp_socket);
+    libsmtp_session->socket=0;
     return LIBSMTP_HOSTNOTFOUND;
   }
   
@@ -169,6 +170,7 @@ int libsmtp_connect (char *libsmtp_server, unsigned int libsmtp_port, unsigned i
   {
     libsmtp_session->ErrorCode = LIBSMTP_CONNECTERR;
     close (libsmtp_socket);
+    libsmtp_session->socket=0;
     return LIBSMTP_CONNECTERR;
   }
   
@@ -180,6 +182,7 @@ int libsmtp_connect (char *libsmtp_server, unsigned int libsmtp_port, unsigned i
   {
     libsmtp_session->ErrorCode=LIBSMTP_ERRORREADFATAL;
     close (libsmtp_socket);
+    libsmtp_session->socket=0;
     return LIBSMTP_ERRORREADFATAL;
   }
   
@@ -187,6 +190,7 @@ int libsmtp_connect (char *libsmtp_server, unsigned int libsmtp_port, unsigned i
   {
     libsmtp_session->ErrorCode = LIBSMTP_NOTWELCOME;
     close (libsmtp_session->socket);
+    libsmtp_session->socket=0;
     return LIBSMTP_NOTWELCOME;
   }
   
@@ -196,6 +200,7 @@ int libsmtp_connect (char *libsmtp_server, unsigned int libsmtp_port, unsigned i
   {
     libsmtp_session->ErrorCode = LIBSMTP_WHATSMYHOSTNAME;
     close (libsmtp_session->socket);
+    libsmtp_session->socket=0;
     return LIBSMTP_WHATSMYHOSTNAME;
   }
   
@@ -207,6 +212,7 @@ int libsmtp_connect (char *libsmtp_server, unsigned int libsmtp_port, unsigned i
   {
     libsmtp_session->ErrorCode=LIBSMTP_ERRORSENDFATAL;
     close (libsmtp_session->socket);
+    libsmtp_session->socket=0;
     return LIBSMTP_ERRORSENDFATAL;
   }
   
@@ -217,6 +223,7 @@ int libsmtp_connect (char *libsmtp_server, unsigned int libsmtp_port, unsigned i
   {
     libsmtp_session->ErrorCode=LIBSMTP_ERRORSENDFATAL;
     close (libsmtp_session->socket);
+    libsmtp_session->socket=0;
     return LIBSMTP_ERRORSENDFATAL;
   }
 
@@ -260,6 +267,7 @@ int libsmtp_connect (char *libsmtp_server, unsigned int libsmtp_port, unsigned i
     {
       libsmtp_session->ErrorCode=LIBSMTP_ERRORSENDFATAL;
       close (libsmtp_session->socket);
+      libsmtp_session->socket=0;
       return LIBSMTP_ERRORSENDFATAL;
     }
   
@@ -271,6 +279,7 @@ int libsmtp_connect (char *libsmtp_server, unsigned int libsmtp_port, unsigned i
          to SMTP transactions - FIXME */
       libsmtp_session->ErrorCode=LIBSMTP_NOTWELCOME;
       close (libsmtp_session->socket);
+      libsmtp_session->socket=0;
       return LIBSMTP_NOTWELCOME;
     }
     
@@ -282,4 +291,14 @@ int libsmtp_connect (char *libsmtp_server, unsigned int libsmtp_port, unsigned i
   return LIBSMTP_NOERR;
 }
 
-  
+int libsmtp_close (struct libsmtp_session_struct *libsmtp_session)
+{
+  /* I just hope that there are no socket with fd 0 out there :) */
+  if (libsmtp_session->socket)
+  {
+    close (libsmtp_session->socket);
+    libsmtp_session->socket=0;
+  }
+
+  return LIBSMTP_NOERR;
+}
