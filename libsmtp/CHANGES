@@ -1,0 +1,22 @@
+0.7.5 * Cleaned up the code, many small bugs fixed
+    
+    * Integrated code cleanups and optimizations from Sean Reifschneider
+    <jafo@tummy.com>. Thanks!
+    
+    * Tested on NetBSD
+    
+    * Integrated handling of 8 bit data. Now if a server can't handle 8bit
+      data, the function just fails, otherwise it is transmitted correctly.
+      
+    * Functions that check for 8 bit user data added.
+    
+    * Functions that output error strings added (sorta strerr)
+    
+    * Test application added. Sends me a mail. Beware!
+    
+    * Some changes to the tracelog code to don't overwrite the end of
+      the string. But I'm not quite sure this is right, so you better
+      choose larger tracelogs (about 2k should suffice)
+    
+
+0.7 Initial release

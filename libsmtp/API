@@ -1,0 +1,118 @@
+
+*libsmtp_session_struct libsmtp_connect (char *server, unsigned int port,
+           unsigned int flags)
+
+Use this function to connect to a mailserver. The string server can either
+be a hostname or an IP address. Port can be left at 0, then the default
+SMTP port (25) can be used. Flags should be left at 0 at the moment. You
+should check the returned struct for error state. An atexit function will be
+registered to free the memory held be structure, but you should clean up
+anyway with libsmtp_free. This function fills in the server_flags struct
+entry so you can see what the other side is capable of.
+Returns: A pointer to an libsmtp_session_struct with data filled in. You
+should check this with libsmtp_error.
+ 
+
+int libsmtp_errno (struct *libsmtp_session_struct data)
+
+This function returns the internal error code for this session. It can be
+read directly from the session_struct, too.
+
+
+const char *libsmtp_strerr (struct *libsmtp_session_struct data)
+
+If you have an error condition, this function will return the error name,
+otherwise "no error" will be returned.
+
+
+int libsmtp_add_recipient (int recipient_type, char *address, struct
+          *libsmtp_session_struct data)
+
+This function will add the address to the recipient of this session.
+recipient_type may be one of LIBSMTP_REC_TO, LIBSMTP_REC_CC,
+LIBSMTP_REC_BCC. This will be added to the linked list internally.
+Returns: 0 for success, otherwise see libsmtp_error.
+
+
+int libsmtp_set_environment (char *from, char *subject, unsigned int flags,
+         struct *libsmtp_session_struct)
+
+With this function you can set additional session parameters for this
+session. This should be set before the dialogue is begun. You can set the
+individual strings in the libsmtp_session_struct by yourself if you want
+to, instead of using this function. Please note that I use glib's GString
+string type for the strings.
+Returns: Nothing really :)
+
+
+int libsmtp_dialogue_send (char *line, struct libsmtp_session_struct *data)
+
+If you want to conduct the SMTP dialogue (the data sent before the BODY
+command appears) yourself, or you just want to add something to the dialogue
+after libsmtp handled the main part for you, you can use this function. Send
+one line at a time. The string line will be overwritten with the returned
+string sent by the mailserver minus the response code. This mailserver
+response can be found in data->LastRespone, too (thats a GString tho!!)
+Returns: the numeric SMTP response code.
+
+
+int libsmtp_dialogue (struct libsmtp_session_struct *data)
+
+This function will handle the SMTP dialogue for you. You can fill out the
+structure yourself. The SMTP response minus response code can be read from
+the data->LastResponse string (which is a GString!)
+Returns: the numeric SMTP response code.
+
+
+int libsmtp_header_send (char *line, struct libsmtp_session_struct *data)
+
+This function will let you send out the SMTP headers. Once this function has
+been called, you can't send any more dialogue lines, because the SMTP BODY
+command has been sent. You can use this to send additional headers, too,
+after libsmtp sent out heads with libsmtp_header.
+Returns: 0 if ok, other see libsmtp_errors
+
+
+int libsmtp_body_send (char *line, struct libsmtp_session_struct *data)
+
+This function sends one line of body text. Please note that with this
+function you must convert the document into SMTP and MIME conformant data
+yourself.
+
+
+int libsmtp_close (struct libsmtp_session_struct *data)
+
+This will close the SMTP connection. You can use this function any time and
+see in the libsmtp_mail_data function the stats of sent mail.
+
+
+int libsmtp_free (struct libsmtp_session_struct *data)
+
+Use this to free the session structure. You should do this to clean up
+memory usage. 
+
+
+struct libsmtp_session_struct {
+  int connection,
+  unsigned int server_flags,
+  int socket,
+  GString *From,
+  GList *To,
+  GList *CC,
+  GList *BCC,
+  int numfailedTo,
+  int numfailedCC,
+  int numfailedBCC,
+  GList *failedTo,
+  GList *failedCC,
+  GList *failedBCC,
+  GString *Subject,
+  GString *LastResponse,
+  int LastResponseCode,
+  int Headers_sent,
+  int Headers_bytes_sent
+  int Dialogue_sent,
+  int Dialogue_bytes_sent,
+  int Body_sent,
+  int Body_bytes_sent
+}

@@ -1,0 +1,87 @@
+
+This is a small C library that allow direct SMTP connections conforming to
+RFC 822. It is designed for security and simplicity. It has tracelog
+functionality (logging) and provides detailed error codes.
+
+All security and debugging functions can be activated and disabled
+on-the-fly through function calls.
+
+It doesn't support multiple recipients at the moment, though, and it could
+be better documented :-)
+
+You can find updates (eventually) at http://libsmtp.berlios.de
+
+There are only 3 functions:
+
+
+void libsmtp_init (void)
+
+  you must call this before you can use any of the functions
+
+
+int libsmtp_set_options (int function_number, int function_value)
+
+  with this function you can set the options libsmtp supports:
+
+  I defined some macros in libsmtp_commands.h, but you can use the numbers
+   too:
+
+#define LIBSMTP_COMMAND_USE8BIT	1
+
+This tells libsmtp that the mail contains non US-ASCII characters which calls
+for a 8-bit capable mail server at the other end at the moment (until I
+implement correct MIME encodings).
+
+#define LIBSMTP_COMMAND_CHECK_FOR_8BIT	4
+
+When this command is activated, libsmtp will scan the body for non-ASCII
+characters and then try to negotiate 8bit handling with the mailserver. This
+eats some CPU cycles, so enable it if you aren't sure that the body is ASCII
+only, bit not otherwise.
+
+
+int libsmtp_errno (void)
+
+ returns the last errno that occured in libsmtp. Useful for real debugging.
+
+
+void libsmtp_set_debug (int flag, char *buffer)
+
+ with this function you can enable the tracing or logging function. Flag
+should be either 0 (off), 1 (on, to buffer) or 2(on, to stdout). If you enable
+logging, you should provide a pointer to a memory buffer of at least 4k size
+in buffer.
+
+
+int libsmtp_sendmail (char *from, char *to, char *mailserver, char *subject, char
+  *body)
+
+ sends mail (what else ;-). The strings from and to can be in any
+RFC822-compliant type, eg:
+
+Kevin Read <kread@innnet.de>
+"Kevin Read" <kread@innnet.de>
+<kread@innnet.de>
+kread@innnet.de
+
+Mailserver is the mailserver to which you send mail. No option to specify
+the port at the moment...
+
+Subject should be self-explanatory
+
+Body too, actually..
+
+It returns the libsmtp-internal error code (see the beginning of 
+libsmtp_error.c for details). This can be converted into a meaningful string
+with 
+
+char *libsmtp_strerr (int errno)
+
+which returns a string containing the error message.
+
+See the examples testapp.c and testapp2.c for more information.
+
+
+Have fun. Comments et al to <kread@innnet.de>
+
+		Kevin Read 11.01.2001

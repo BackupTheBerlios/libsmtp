@@ -1,0 +1,123 @@
+diff -bB -x libsmtp-0.7.5/*.[!h] -x libsmtp-0.7.5/*.[!c] -x libsmtp-0.7.5/Makefile -x libsmtp-0.7.5-mini-libc/*.[!h] -x libsmtp-0.7.5-mini-libc/*.[!c] -x libsmtp-0.7.5-mini-libc/Makefile libsmtp-0.7.5/Makefile libsmtp-0.7.5-mini-libc/Makefile
+2c2
+< all:	libsmtp.a testapp
+---
+> all:	libsmtp.a testapp2
+5c5
+< 	ar -r libsmtp.a libsmtp.o libsmtp_commands.o libsmtp_error.o
+---
+> 	ar -cru libsmtp.a libsmtp.o libsmtp_commands.o libsmtp_error.o
+7,8d6
+< libsmtp.o:	libsmtp.c libsmtp_int.h
+< 	gcc -c -Os -o libsmtp.o libsmtp.c
+9a8,10
+> libsmtp.o:	libsmtp.c libsmtp_int.h
+> 	gcc -nostdlib -I/root/mini-sendmail/uClibc/include -I./ -c -Os -o libsmtp.o libsmtp.c
+> 	strip -x -R .note -R .comment libsmtp.o
+11,12c12,13
+< 	gcc -c -Os -o libsmtp_commands.o libsmtp_commands.c
+< 
+---
+> 	gcc -nostdlib -I/root/mini-sendmail/uClibc/include -I./  -c -Os -o libsmtp_commands.o libsmtp_commands.c
+> 	strip -x -R .note -R .comment libsmtp_commands.o
+14,20c15,26
+< 	gcc -c -Os -o libsmtp_error.o libsmtp_error.c
+< 
+< testapp.o:	testapp.c
+< 	gcc -c -Os -o testapp.o testapp.c
+< 
+< testapp:	testapp.o libsmtp.a
+< 	gcc -o testapp -Os -L. testapp.o -lsmtp
+---
+> 	gcc -nostdlib -I/root/mini-sendmail/uClibc/include -I./  -c -Os -o libsmtp_error.o libsmtp_error.c
+> 	strip  -x -R .note -R .comment libsmtp_error.o
+> testapp2.o:	testapp2.c
+> 	gcc -nostdlib -I/root/mini-sendmail/uClibc/include -I./ -c -Os -o testapp2.o testapp2.c
+> 	strip -x -R .note -R .comment testapp2.o
+> start.o:	start.S
+> 	gcc -nostdlib -I./ -c start.S
+> 
+> testapp2:	testapp2.o libsmtp.a  start.o
+> 	gcc  -static -nostdlib  -L/root/mini-sendmail/uClibc/ -L./ -Os -o \
+> 				testapp2  testapp2.o  start.o -lsmtp -lc
+> 	strip testapp2
+23c29
+< 	rm testapp *.o *.a
+\ No newline at end of file
+---
+> 	rm testapp2  *.o *.a
+\ No newline at end of file
+Only in libsmtp-0.7.5-mini-libc: Makefile~
+Only in libsmtp-0.7.5-mini-libc: body
+Only in libsmtp-0.7.5-mini-libc: body~
+Only in libsmtp-0.7.5-mini-libc: libsmtp.a
+diff -bB -x libsmtp-0.7.5/*.[!h] -x libsmtp-0.7.5/*.[!c] -x libsmtp-0.7.5/Makefile -x libsmtp-0.7.5-mini-libc/*.[!h] -x libsmtp-0.7.5-mini-libc/*.[!c] -x libsmtp-0.7.5-mini-libc/Makefile libsmtp-0.7.5/libsmtp.c libsmtp-0.7.5-mini-libc/libsmtp.c
+10c10,14
+< #include <sys/types.h>
+---
+> 
+> /* isascii() is in ctype.h. Change it, if you get an error CZ*/
+> //#include <sys/types.h>
+> #include <ctype.h>
+> 
+29c34
+<   printf ("Strlen: %d. Size: %d. Written: %d\n", libsmtp_len_string,
+---
+>   printf ("Strlen: %d. Size: %lu. Written: %d\n", libsmtp_len_string,
+41a47,48
+> 
+> 	return 0;
+47c54
+<   char libsmtp_temp_buffer[4020];
+---
+> //  char libsmtp_temp_buffer[4020];
+151,152c161,163
+<   int libsmtp_temp, libsmtp_error_found;
+<   char *libsmtp_tempsubject;
+---
+>   int libsmtp_temp;
+> // int libsmtp_error_found;
+> //  char *libsmtp_tempsubject;
+166c177
+<       if (!isascii (libsmtp_body[libsmtp_temp]))
+---
+>       if (!(isascii(libsmtp_body[libsmtp_temp])))
+199c210,212
+<   char *libsmtp_sender, *libsmtp_recv;
+---
+>   /* temporarily set to 0 to avoid compiler warnings CZ*/
+>   char *libsmtp_sender = '\0';
+>   char *libsmtp_recv = '\0';
+439c452
+<   if (libsmtp_sendstr (libsmtp_mailsocket, "\nX-Mailer: C-Mailer routines\n\n")<0)
+---
+>   if (libsmtp_sendstr (libsmtp_mailsocket, "\nX-Mailer: throwmail 0.0.1\n\n")<0)
+diff -bB -x libsmtp-0.7.5/*.[!h] -x libsmtp-0.7.5/*.[!c] -x libsmtp-0.7.5/Makefile -x libsmtp-0.7.5-mini-libc/*.[!h] -x libsmtp-0.7.5-mini-libc/*.[!c] -x libsmtp-0.7.5-mini-libc/Makefile libsmtp-0.7.5/libsmtp.h libsmtp-0.7.5-mini-libc/libsmtp.h
+18c18
+< void libsmtp_set_debug(int, char *, unsigned int);
+---
+> void libsmtp_set_debug(int, char *, unsigned long int);
+Only in libsmtp-0.7.5-mini-libc: libsmtp.o
+diff -bB -x libsmtp-0.7.5/*.[!h] -x libsmtp-0.7.5/*.[!c] -x libsmtp-0.7.5/Makefile -x libsmtp-0.7.5-mini-libc/*.[!h] -x libsmtp-0.7.5-mini-libc/*.[!c] -x libsmtp-0.7.5-mini-libc/Makefile libsmtp-0.7.5/libsmtp_commands.c libsmtp-0.7.5-mini-libc/libsmtp_commands.c
+4c4
+< void libsmtp_set_debug (int libsmtp_debug_opt, char *libsmtp_tracelog_opt, unsigned int libsmtp_size_tracelog_opt)
+---
+> void libsmtp_set_debug (int libsmtp_debug_opt, char *libsmtp_tracelog_opt, unsigned long int libsmtp_size_tracelog_opt)
+Only in libsmtp-0.7.5-mini-libc: libsmtp_commands.o
+Only in libsmtp-0.7.5-mini-libc: libsmtp_error.o
+diff -bB -x libsmtp-0.7.5/*.[!h] -x libsmtp-0.7.5/*.[!c] -x libsmtp-0.7.5/Makefile -x libsmtp-0.7.5-mini-libc/*.[!h] -x libsmtp-0.7.5-mini-libc/*.[!c] -x libsmtp-0.7.5-mini-libc/Makefile libsmtp-0.7.5/libsmtp_int.h libsmtp-0.7.5-mini-libc/libsmtp_int.h
+13c13
+< int libsmtp_size_tracelog;
+---
+> unsigned long int libsmtp_size_tracelog;
+18c18
+< void libsmtp_set_debug(int, char *, unsigned int);
+---
+> void libsmtp_set_debug(int, char *, unsigned long int);
+Only in libsmtp-0.7.5-mini-libc: start.S
+Only in libsmtp-0.7.5-mini-libc: start.h
+Only in libsmtp-0.7.5-mini-libc: start.o
+Only in libsmtp-0.7.5-mini-libc: start.oo
+Only in libsmtp-0.7.5-mini-libc: testapp2
+Only in libsmtp-0.7.5-mini-libc: testapp2.o
+Only in libsmtp-0.7.5-mini-libc: testapp3

@@ -1,0 +1,9 @@
+
+* Don't fail if a mailserver can't handle 8bit data, but convert it into 7bit
+  data.
+
+* Handle 8bit data in Subject lines correctly.
+
+* Attachments and general MIME handling!
+
+* Sending mail to multiple recipients at the same time (maybe even cc and bcc)
