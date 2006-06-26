@@ -9,13 +9,13 @@ CODENAME=None
 
 dnl version number
 MAJOR_VERSION=0
-MINOR_VERSION=8
+MINOR_VERSION=9
 MICRO_VERSION=0
 EXTRA_VERSION=0
 
 AC_PROG_MAKE_SET
 
-subdirs="smtp"
+subdirs="smtp include"
 
 dnl Checks for programs.
 AC_PROG_CC
@@ -27,9 +27,9 @@ dnl Replace `main' with a function in -lglib:
 AC_CHECK_LIB(glib, main)
 
 AC_ARG_ENABLE(mime,
-	[  --enable-mime         enable libsmtp_mime [default=no]])
+	[  --disable-mime         disable libsmtp_mime and mime support [default=no]])
 
-if test "$enable_mime" != "yes"; then
+if test "$disable_mime" == "yes"; then
 	AC_DEFINE(WITHOUT_MIME)
 else
 	AC_DEFINE(WITH_MIME)
@@ -67,4 +67,4 @@ AC_SUBST(subdirs)
 AC_SUBST(with_mime)
 AC_SUBST(addtl_flags)
 
-AC_OUTPUT(mime/Makefile smtp/Makefile examples/Makefile Makefile, echo timestamp > stamp-h)
+AC_OUTPUT(mime/Makefile smtp/Makefile examples/Makefile Makefile include/Makefile, echo timestamp > stamp-h)

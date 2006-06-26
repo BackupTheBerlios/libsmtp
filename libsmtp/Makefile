@@ -1,5 +1,5 @@
 SHELL = /bin/sh
-VPATH =  subdirs = smtp examples
+VPATH =  subdirs = smtp mime examples
 
 top_srcdir = .
 srcdir = .
@@ -10,13 +10,13 @@ infodir = $(prefix)/info
 libdir = $(prefix)/lib/gnudl
 mandir = $(prefix)/man/man1
 # subdirs = smtp mime examples
-subdirs = smtp examples
+subdirs = smtp mime examples
 
 CC = gcc
 CPPFLAGS = 
 CFLAGS = $(CPPFLAGS) -g -O2
-LDFLAGS = 
-LIBS = -lglib 
+LDFLAGS = `glib-config --libs` 
+LIBS = -lglib -lglib 
 INSTALL = /bin/install -c
 
 
@@ -30,6 +30,12 @@ install:
 	@for dir in ${subdirs}; do \
 	  (cd $$dir && $(MAKE) install) \
 	  || case "$(MFLAGS)" in *k*) fail=yes;; *) exit 1;; esac; \
+	done && test -z "$$fail"
+
+uninstall:
+	@for dir in ${subdirs}; do \
+	(cd $$dir && $(MAKE) uninstall) \
+	|| case "$(MFLAGS)" in *k*) fail=yes;; *) exit 1;; esac; \
 	done && test -z "$$fail"
 clean:
 	/bin/rm -f *~

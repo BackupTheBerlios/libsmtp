@@ -15,7 +15,7 @@ subdirs = @subdirs@
 CC = @CC@
 CPPFLAGS = @CPPFLAGS@
 CFLAGS = $(CPPFLAGS) @CFLAGS@
-LDFLAGS = @LDFLAGS@
+LDFLAGS = `glib-config --libs` @LDFLAGS@
 LIBS = @LIBS@
 INSTALL = @INSTALL@
 
@@ -30,6 +30,12 @@ install:
 	@for dir in ${subdirs}; do \
 	  (cd $$dir && $(MAKE) install) \
 	  || case "$(MFLAGS)" in *k*) fail=yes;; *) exit 1;; esac; \
+	done && test -z "$$fail"
+
+uninstall:
+	@for dir in ${subdirs}; do \
+	(cd $$dir && $(MAKE) uninstall) \
+	|| case "$(MFLAGS)" in *k*) fail=yes;; *) exit 1;; esac; \
 	done && test -z "$$fail"
 clean:
 	/bin/rm -f *~

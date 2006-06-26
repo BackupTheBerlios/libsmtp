@@ -4,6 +4,10 @@
       * Various bugs in bitwise OR'ing (rather embarrasing, but I was young and needed the code ;)
 	and an assignment related bug fixed in smtp/libsmtp_connection.c. Thanks again to Vladimir Pycha
 
+0.8.1  Thanks to an anonymous code donator on Berlios:
+       * Added "extern "C" to headers
+       * fixed configure, make, install a bit. Should work better now
+
 
 0.8.0 * Base64 encoding can only send data chunks that are of a size of a
         multiple of 3, except for the last chunk of a part.

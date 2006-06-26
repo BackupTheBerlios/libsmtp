@@ -165,12 +165,11 @@ int libsmtp_int_send_body (char *libsmtp_send_string, unsigned long int libsmtp_
 
 int libsmtp_dialogue (struct libsmtp_session_struct *libsmtp_session)
 {
-  int libsmtp_temp;
+  unsigned int libsmtp_temp;
   GString *libsmtp_temp_gstring;
-  GList *libsmtp_temp_glist, *libsmtp_swap_glist;
-    /* temp_glist is the index into the lists of recipients,
-       swap_glist is needed to adjust the beginning of of the list */
-  
+  GList *libsmtp_temp_glist;
+    /* temp_glist is the index into the lists of recipients */
+ 
   libsmtp_temp_gstring = g_string_new(NULL);
   
   /* This can only be used if the hello stage is finished, but we haven't
@@ -239,7 +238,7 @@ int libsmtp_dialogue (struct libsmtp_session_struct *libsmtp_session)
       printf ("To: %s\n", libsmtp_temp_glist->data);
     #endif
     g_string_sprintf (libsmtp_temp_gstring, "RCPT TO: %s\r\n", \
-        libsmtp_temp_glist->data);
+        (const gchar *)libsmtp_temp_glist->data);
     
 
     /* Every recipient gets sent to the server */
@@ -281,7 +280,7 @@ int libsmtp_dialogue (struct libsmtp_session_struct *libsmtp_session)
   {
     libsmtp_temp_glist=g_list_nth (libsmtp_session->CC, libsmtp_temp);
     g_string_sprintf (libsmtp_temp_gstring, "RCPT TO: %s\r\n", \
-        libsmtp_temp_glist->data);
+        (const gchar *)libsmtp_temp_glist->data);
     
 
     /* Every recipient gets sent to the server */
@@ -322,7 +321,7 @@ int libsmtp_dialogue (struct libsmtp_session_struct *libsmtp_session)
   {
     libsmtp_temp_glist=g_list_nth (libsmtp_session->BCC, libsmtp_temp);
     g_string_sprintf (libsmtp_temp_gstring, "RCPT TO: %s\r\n", \
-        libsmtp_temp_glist->data);
+        (const gchar *)libsmtp_temp_glist->data);
     
 
     /* Every recipient gets sent to the server */
@@ -399,9 +398,8 @@ int libsmtp_dialogue_send (char *libsmtp_dialogue_string, \
 
 int libsmtp_headers (struct libsmtp_session_struct *libsmtp_session)
 {
-
-  int libsmtp_temp;
-  GString *libsmtp_temp_gstring;
+  unsigned int libsmtp_temp;
+  GString *libsmtp_temp_gstring = g_string_new (NULL);
   GList *libsmtp_temp_glist;
 
   /* patch from Gleen Salmon: send RFC2822 Date */

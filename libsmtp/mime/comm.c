@@ -43,7 +43,7 @@ int libsmtp_mime_headers (struct libsmtp_session_struct *libsmtp_session)
    /* If we use the MIME functionality, we need to send some stuff */
    int libsmtp_temp;
    GString *libsmtp_temp_gstring;
-   char *libsmtp_temp_string;
+   gchar *libsmtp_temp_string;
    struct libsmtp_part_struct *libsmtp_temp_part;
    
    libsmtp_temp_gstring=g_string_new (NULL);

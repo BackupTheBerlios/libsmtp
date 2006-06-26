@@ -841,7 +841,7 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-mime         enable libsmtp_mime default=no
+  --disable-mime         disable libsmtp_mime and mime support default=no
   --enable-debug         compile with debug info default=no
 
 Some influential environment variables:
@@ -1309,7 +1309,7 @@ PACKAGE=libsmtp
 CODENAME=None
 
 MAJOR_VERSION=0
-MINOR_VERSION=8
+MINOR_VERSION=9
 MICRO_VERSION=0
 EXTRA_VERSION=0
 
@@ -2536,7 +2536,7 @@ if test "${enable_mime+set}" = set; then
 
 fi;
 
-if test "$enable_mime" != "yes"; then
+if test "$disable_mime" == "yes"; then
 	cat >>confdefs.h <<\_ACEOF
 #define WITHOUT_MIME 1
 _ACEOF

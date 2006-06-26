@@ -23,7 +23,7 @@
 #define HAVE_LIBGLIB 1
 
 /* Define if you want to compile MIME lib */
-/* #undef WITH_MIME */
+#define WITH_MIME 1
 
 /* Define if you want to compile with debug output */
 /* #undef LIBSMTP_DEBUG */

@@ -30,9 +30,9 @@ AR_FLAGS = rc
 RANLIB = ranlib
 
 CC = gcc
-CFLAGS = -I. -I../include `glib-config --cflags` -g -O2 
+CFLAGS = -I. -I../include `glib-config --cflags` -g -O2 -DUSE_MIME
 LDFLAGS = -L. 
-LIBS = -lsmtp -lglib 
+LIBS = -lsmtp -lglib -lglib 
 INSTALL = /bin/install -c
 prefix = /usr/local
 exec_prefix = ${prefix}
