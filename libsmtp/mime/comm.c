@@ -101,7 +101,7 @@ int libsmtp_mime_headers (struct libsmtp_session_struct *libsmtp_session)
 
   if (!libsmtp_session->Parts)
   {
-    g_string_assign (libsmtp_temp_gstring, "Content-Type: text/plain; charset=\"us-ascii\r\n\"");
+    g_string_assign (libsmtp_temp_gstring, "Content-Type: text/plain; charset=\"us-ascii\"\r\n");
 
     #ifdef LIBSMTP_DEBUG
       printf ("libsmtp_mime_headers: %s", libsmtp_temp_gstring->str);

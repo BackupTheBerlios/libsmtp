@@ -32,6 +32,8 @@ Thu Aug 16 2001 */
 
 #include "libsmtp.h"
 
+#include <time.h>
+
 /* internal communication functions */
 
 /* Type is one of:
@@ -401,6 +403,13 @@ int libsmtp_headers (struct libsmtp_session_struct *libsmtp_session)
   int libsmtp_temp;
   GString *libsmtp_temp_gstring;
   GList *libsmtp_temp_glist;
+
+  /* patch from Gleen Salmon: send RFC2822 Date */
+  time_t a_time_t;
+  struct tm a_tm;
+  char date_str[64];
+  char date_zone_str[64];
+  /* end patch */
   
   /* Are we at the end of the dialogue stage, but haven't sent the
      body yet? */
@@ -444,7 +453,6 @@ int libsmtp_headers (struct libsmtp_session_struct *libsmtp_session)
      the mailserver until we end the DATA part. */
   
   /* First the From: header */
-  
   g_string_sprintf (libsmtp_temp_gstring, "From: %s\n", \
                       libsmtp_session->From->str);
   
@@ -459,6 +467,20 @@ int libsmtp_headers (struct libsmtp_session_struct *libsmtp_session)
   if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 1))
     return LIBSMTP_ERRORSENDFATAL;
   
+  /* patch from Gleen Salmon: send RFC2822 Date */
+  /* Then the Date: header */
+
+  a_time_t = time(NULL);
+  strftime(date_str, sizeof(date_str), "%a, %d %b %Y %H:%M:%S", \
+	   localtime_r(&a_time_t, &a_tm));
+  sprintf(date_zone_str, "%s %c%02d%02d", date_str, timezone>=0?'-':'+', \
+       labs(timezone)/60/60, labs(timezone)/60%60);
+  g_string_sprintf (libsmtp_temp_gstring, "Date: %s\n", date_zone_str);
+  if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 1))
+    return LIBSMTP_ERRORSENDFATAL;
+
+  /* end patch */
+
   /* Then we send all the To: addresses */
 
   g_string_assign (libsmtp_temp_gstring, "To: ");
@@ -596,7 +618,7 @@ int libsmtp_body_send_raw (char *libsmtp_body_data, unsigned long int libsmtp_in
      first */
   
   /* Headers should have been sent before body data goes out */
-  if (libsmtp_session->Stage = LIBSMTP_HEADERS_STAGE)
+  if (libsmtp_session->Stage == LIBSMTP_HEADERS_STAGE)
   {
     GString *libsmtp_temp_gstring = g_string_new (NULL);
     /* Now let there be a blank line */
@@ -683,7 +705,7 @@ int libsmtp_quit (struct libsmtp_session_struct *libsmtp_session)
     libsmtp_session->Stage = LIBSMTP_QUIT_STAGE;  
 
     /* Lets tell him we are quitting. */
-    libsmtp_temp_gstring = g_string_new ("QUIT\n");
+    libsmtp_temp_gstring = g_string_new ("QUIT\r\n");
   
     if (libsmtp_int_send (libsmtp_temp_gstring, libsmtp_session, 1))
       return LIBSMTP_ERRORSENDFATAL;

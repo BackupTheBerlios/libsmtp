@@ -149,6 +149,7 @@ struct libsmtp_part_struct *libsmtp_part_new \
   libsmtp_int_part->Encoding=libsmtp_int_encoding;
   libsmtp_int_part->Description=g_string_new (libsmtp_int_desc);
   libsmtp_int_part->Charset=libsmtp_int_charset;
+  libsmtp_int_part->Base64_finished=0;
 
   if (libsmtp_int_check_part (libsmtp_int_part))
   {

@@ -1,5 +1,5 @@
-# Generated automatically from Makefile.in by configure.
 SHELL = /bin/sh
+VPATH =  subdirs = smtp examples
 
 top_srcdir = .
 srcdir = .
@@ -10,14 +10,14 @@ infodir = $(prefix)/info
 libdir = $(prefix)/lib/gnudl
 mandir = $(prefix)/man/man1
 # subdirs = smtp mime examples
-subdirs = smtp mime examples
+subdirs = smtp examples
 
 CC = gcc
 CPPFLAGS = 
 CFLAGS = $(CPPFLAGS) -g -O2
 LDFLAGS = 
 LIBS = -lglib 
-INSTALL = /usr/bin/install -c
+INSTALL = /bin/install -c
 
 
 all:

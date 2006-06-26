@@ -1,4 +1,3 @@
-# Generated automatically from Makefile.in by configure.
 # Main Makefile for Kevins stupid "libsmtp" library
 # Copyright (C) 2001 Kevin Read.
 
@@ -20,6 +19,7 @@ SHELL = /bin/sh
 top_srcdir = ..
 srcdir = .
 
+
 .SUFFIXES:
 .SUFFIXES: .c .o
 
@@ -30,10 +30,10 @@ AR_FLAGS = rc
 RANLIB = ranlib
 
 CC = gcc
-CFLAGS = -I. -I../include `glib-config --cflags` -g -O2 -DUSE_MIME
+CFLAGS = -I. -I../include `glib-config --cflags` -g -O2 
 LDFLAGS = -L. 
 LIBS = -lsmtp -lglib 
-INSTALL = /usr/bin/install -c
+INSTALL = /bin/install -c
 prefix = /usr/local
 exec_prefix = ${prefix}
 bindir = $(exec_prefix)/bin
